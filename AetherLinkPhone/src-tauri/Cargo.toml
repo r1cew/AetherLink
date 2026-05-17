@@ -26,3 +26,6 @@ uuid           = { version = "1", features = ["v4"] }
 base64         = "0.22"
 rand           = "0.8"
 tokio          = { version = "1", features = ["full"] }
+
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-barcode-scanner = "2"

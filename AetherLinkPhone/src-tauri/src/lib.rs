@@ -4,8 +4,8 @@
 /// │ Команда                     │ Назначение                                  │
 /// ├─────────────────────────────┼─────────────────────────────────────────────┤
 /// │ pair_with_qr(qr, name)      │ Привязать ПК по QR-коду                     │
-/// │ get_servers()               │ Список привязанных ПК                        │
-/// │ remove_server(id)           │ Удалить ПК                                   │
+/// │ get_servers()               │ Список привязанных ПК                       │
+/// │ remove_server(id)           │ Удалить ПК                                  │
 /// │ send_safe(id, cmd, params)  │ Safe Mode — системная команда               │
 /// │ send_run_profile(id, pid)   │ Automation — запустить профиль              │
 /// │ list_profiles(id)           │ Automation — список профилей с ПК           │
@@ -316,6 +316,7 @@ async fn discover_and_update(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_barcode_scanner::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let data_dir = app

@@ -4,5 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "tauri": "echo skip"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-barcode-scanner": "^2.4.4"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "aetherlink-phone",
-    "private": true,
+  "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-barcode-scanner": "^2.4.4",
     "@tauri-apps/plugin-opener": "^2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
