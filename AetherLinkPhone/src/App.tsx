@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
+// Импортируем сканер из плагина Tauri
+import {
+  scan,
+  cancel,
+  Format,
+  checkPermissions,
+  requestPermissions,
+} from "@tauri-apps/plugin-barcode-scanner";
 import "./App.css";
 
 // ── типы ───────────────────────────────────────────────────────────────────────
@@ -15,7 +23,6 @@ interface Profile {
   description?: string;
 }
 
-// ── экраны ─────────────────────────────────────────────────────────────────────
 type Screen = "servers" | "pair" | "control";
 
 export default function App() {
@@ -25,6 +32,7 @@ export default function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [log, setLog] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isScanning, setIsScanning] = useState(false); // Стейт для режима камеры
 
   // ── паринг форма ─────────────────────────────────────────────────────────────
   const [qrText, setQrText] = useState("");
@@ -52,6 +60,16 @@ export default function App() {
     loadServers();
   }, []);
 
+  // Управляем прозрачностью body в зависимости от стейта сканирования
+  useEffect(() => {
+    if (isScanning) {
+      document.body.classList.add("scanning-active");
+    } else {
+      document.body.classList.remove("scanning-active");
+    }
+    return () => document.body.classList.remove("scanning-active");
+  }, [isScanning]);
+
   // ── загрузить профили ─────────────────────────────────────────────────────────
   async function loadProfiles(server: Server) {
     try {
@@ -72,10 +90,56 @@ export default function App() {
     setScreen("control");
   }
 
+  // ── функция запуска камеры ─────────────────────────────────────────────────────
+  async function startQrScan() {
+    setLog("");
+    try {
+      // 1. Проверяем текущий статус разрешения в Android
+      let permission = await checkPermissions();
+
+      // 2. Если разрешение еще не выдано (статус 'prompt' или 'prompt-with-rationale')
+      if (permission !== "granted") {
+        msg("Запрашиваю доступ к камере...");
+        permission = await requestPermissions(); // Вот тут Android покажет системное окно
+      }
+
+      // 3. Если пользователь всё-таки отказал в доступе
+      if (permission !== "granted") {
+        msg(
+          "❌ Доступ к камере отклонен. Вы можете включить его вручную в настройках телефона.",
+        );
+        return;
+      }
+
+      // 4. Если доступ успешно получен (или уже был) — включаем камеру
+      setIsScanning(true);
+      const result = await scan({
+        formats: [Format.QRCode],
+      });
+
+      if (result && result.content) {
+        setQrText(result.content);
+        msg("QR-код успешно считан!");
+      }
+    } catch (e) {
+      msg(`Ошибка камеры: ${e}`);
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  // ── принудительная отмена камеры ────────────────────────────────────────────────
+  async function stopQrScan() {
+    try {
+      await cancel();
+    } catch {}
+    setIsScanning(false);
+  }
+
   // ── паринг ───────────────────────────────────────────────────────────────────
   async function pair() {
     if (!qrText.trim()) {
-      msg("Вставь JSON из QR");
+      msg("Сначала отсканируй QR или вставь JSON");
       return;
     }
     setLoading(true);
@@ -213,6 +277,21 @@ export default function App() {
   if (screen === "pair")
     return (
       <main className="shell">
+        {/* Оверлей сканера камеры, который рендерится поверх пустогоWebView */}
+        {isScanning && (
+          <div className="camera-overlay">
+            <div className="scanner-hint">Наведите камеру на QR-код на ПК</div>
+            <div className="scanner-target"></div>
+            <button
+              className="btn-primary"
+              style={{ background: "var(--red)" }}
+              onClick={stopQrScan}
+            >
+              Отмена
+            </button>
+          </div>
+        )}
+
         <div className="topbar">
           <button className="icon-btn" onClick={() => setScreen("servers")}>
             ‹
@@ -222,19 +301,34 @@ export default function App() {
         </div>
 
         <div className="pair-screen">
-          <div className="pair-icon">📷</div>
+          <div
+            className="pair-icon"
+            style={{ cursor: "pointer" }}
+            onClick={startQrScan}
+          >
+            📷
+          </div>
           <p className="pair-hint">
-            На ПК нажми «Сгенерировать QR» и вставь сюда JSON
-            <br />
-            <small>(позже здесь будет камера)</small>
+            Нажмите на иконку камеры, чтобы отсканировать QR на ПК.
           </p>
 
+          <button
+            className="btn-primary"
+            onClick={startQrScan}
+            style={{ marginBottom: "10px" }}
+          >
+            [📷] Начать сканирование
+          </button>
+
+          <hr style={{ borderColor: "var(--border)", margin: "8px 0" }} />
+
+          <label className="field-label">Или вставьте JSON вручную:</label>
           <textarea
             className="qr-input"
-            placeholder='{"ip":"192.168.1.5","port":8080,"server_public_key":"...","pairing_token":"..."}'
+            placeholder='{"ip":"192.168.1.5","port":8080,...}'
             value={qrText}
             onChange={(e) => setQrText(e.target.value)}
-            rows={4}
+            rows={3}
           />
 
           <label className="field-label">Имя телефона (видно на ПК)</label>
@@ -251,7 +345,11 @@ export default function App() {
             onChange={(e) => setPcName(e.target.value)}
           />
 
-          <button className="btn-primary" onClick={pair} disabled={loading}>
+          <button
+            className="btn-primary"
+            onClick={pair}
+            disabled={loading || !qrText.trim()}
+          >
             {loading ? "Подключение…" : "Привязать"}
           </button>
 

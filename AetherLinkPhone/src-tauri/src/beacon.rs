@@ -4,7 +4,7 @@
 /// (ПК шлёт "AETHERLINK_8080" каждые 3 сек на порт 9999).
 use std::{net::UdpSocket, time::Duration};
 
-pub const BEACON_PORT: u16  = 9999;
+pub const BEACON_PORT: u16 = 9999;
 pub const BEACON_MSG: &[u8] = b"AETHERLINK_8080";
 
 /// Слушает beacon до таймаута. Возвращает IP-адрес найденного ПК.
