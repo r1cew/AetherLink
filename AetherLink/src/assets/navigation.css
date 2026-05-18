@@ -1,0 +1,273 @@
+.navigation {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 1.5rem;
+  position: sticky;
+  top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nav-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ffffff 0%, #d8323c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.nav-indicator {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #d8323c, transparent);
+  border-radius: 2px;
+}
+
+.nav-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.nav-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.nav-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(216, 50, 60, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-card:hover::before {
+  opacity: 1;
+}
+
+.nav-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(216, 50, 60, 0.3);
+  background: rgba(216, 50, 60, 0.08);
+}
+
+.nav-card.active {
+  background: rgba(216, 50, 60, 0.15);
+  border-color: #d8323c;
+  box-shadow: 0 4px 12px rgba(216, 50, 60, 0.2);
+}
+
+.card-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #d8323c;
+  border-radius: 3px;
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.nav-card.active .card-strip {
+  transform: scaleY(1);
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(216, 50, 60, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.nav-card.active .card-icon {
+  background: rgba(216, 50, 60, 0.2);
+  transform: scale(1.05);
+}
+
+.card-icon svg {
+  stroke: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.nav-card.active .card-icon svg {
+  stroke: #d8323c;
+}
+
+.card-info {
+  flex: 1;
+  z-index: 1;
+}
+
+.card-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.nav-card.active .card-title {
+  color: #d8323c;
+}
+
+.card-description {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.3s ease;
+}
+
+.nav-card.active .card-description {
+  color: rgba(216, 50, 60, 0.7);
+}
+
+.card-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.card-arrow svg {
+  stroke: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.nav-card:hover .card-arrow {
+  background: rgba(216, 50, 60, 0.15);
+  transform: translateX(2px);
+}
+
+.nav-card:hover .card-arrow svg {
+  stroke: #d8323c;
+}
+
+.nav-card.active .card-arrow {
+  background: rgba(216, 50, 60, 0.2);
+}
+
+.nav-card.active .card-arrow svg {
+  stroke: #d8323c;
+}
+
+.nav-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.version {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+}
+
+/* Анимация пульсации для активной карточки */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(216, 50, 60, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(216, 50, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(216, 50, 60, 0);
+  }
+}
+
+.nav-card.active {
+  animation: pulse 2s infinite;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: none;
+    border-radius: 24px 24px 0 0;
+    padding: 1rem;
+    z-index: 1000;
+  }
+
+  .nav-header,
+  .nav-footer,
+  .card-description,
+  .card-arrow {
+    display: none;
+  }
+
+  .nav-grid {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .nav-card {
+    flex: 1;
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .card-info {
+    display: none;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .card-strip {
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    transform: scaleX(0);
+  }
+
+  .nav-card.active .card-strip {
+    transform: scaleX(1);
+  }
+}

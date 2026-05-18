@@ -1,6 +1,7 @@
 import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { ref, onMounted, onUnmounted } from "vue";
 
 export function useAetherLink() {
   // ── состояние ──────────────────────────────────────────────────────────────────
@@ -37,10 +38,53 @@ export function useAetherLink() {
   }
 
   // ── паринг ────────────────────────────────────────────────────────────────────
+
+  const timeLeft = ref(120);
+  const timerActive = ref(false);
+  let timerInterval: number | null = null;
+
+  const formatTime = (seconds: number): string => {
+    return seconds.toString();
+  };
+
+  const startTimer = () => {
+    if (timerActive.value) return;
+    if (timeLeft.value <= 0) {
+      return;
+    }
+
+    timerActive.value = true;
+    timerInterval = window.setInterval(() => {
+      if (timeLeft.value > 0) {
+        timeLeft.value--;
+      } else {
+        stopTimer();
+        generateQR();
+      }
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    timerActive.value = false;
+  };
+
+  onUnmounted(() => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+  });
+
   async function generateQR() {
     try {
       qrData.value = await invoke("generate_pairing_qr");
       addLog("QR сгенерирован — действителен 120 сек");
+      timeLeft.value = 120;
+      stopTimer();
+      startTimer();
     } catch (e) {
       addLog(`Ошибка QR: ${e}`);
     }
@@ -80,24 +124,50 @@ export function useAetherLink() {
   // ── профили ───────────────────────────────────────────────────────────────────
   const newProfileName = ref("");
   const newProfilePath = ref("");
+  const newProfileDescription = ref("");
+  const newProfileType = ref("");
+  const newProfileArgs = ref<string[]>([]);
+  const newProfileScript = ref("");
 
-  async function createTestProfile() {
-    if (!newProfileName.value || !newProfilePath.value) return;
+  async function createProfile() {
+    if (!newProfileName.value) return;
+
+    // Сборка объекта "kind" на основании выбранного типа
+    let kindPayload: Record<string, any> = {
+      type: newProfileType.value,
+    };
+
+    if (newProfileType.value === "run_bat") {
+      kindPayload.path = newProfilePath.value;
+    } else if (newProfileType.value === "run_exe") {
+      kindPayload.path = newProfilePath.value;
+      kindPayload.args = newProfileArgs.value; // Передаем массив строк
+    } else if (newProfileType.value === "power_shell") {
+      kindPayload.script = newProfileScript.value; // Только скрипт, без path и args
+    }
+
     try {
+      // Отправка структурированных данных в бэкенд Tauri
       const id = await invoke("create_profile", {
         name: newProfileName.value,
-        description: "Тестовый профиль",
-        kind: { type: "run_bat", path: newProfilePath.value },
+        description: newProfileDescription.value,
+        kind: kindPayload,
       });
+
       addLog(`Профиль создан: ${id}`);
+
+      // Очистка состояния стейта в composable
       newProfileName.value = "";
       newProfilePath.value = "";
+      newProfileArgs.value = [];
+      newProfileScript.value = "";
+
       loadProfiles();
     } catch (e) {
       addLog(`Ошибка: ${e}`);
+      throw e; // Пробрасываем ошибку для обработки в handleCreateTask
     }
   }
-
   async function deleteProfile(id: string) {
     try {
       await invoke("delete_profile", { profileId: id });
@@ -139,9 +209,15 @@ export function useAetherLink() {
     addPhone,
     log,
     jsonCheck,
+    timeLeft,
+    formatTime,
     // Формы
     newProfileName,
     newProfilePath,
+    newProfileDescription,
+    newProfileType,
+    newProfileArgs,
+    newProfileScript,
     // Методы
     generateQR,
     addLog,
@@ -149,7 +225,7 @@ export function useAetherLink() {
     setMode,
     removeDevice,
     toggleDevMode,
-    createTestProfile,
+    createProfile,
     deleteProfile,
     showJson,
   };

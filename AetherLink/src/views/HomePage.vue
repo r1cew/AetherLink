@@ -5,12 +5,26 @@
 
       <!-- ── QR Паринг ─────────────────────────────────────── -->
       <section>
-        <Qrcode v-if="qrData" :value="qrData" :size="200" render-as="svg" />
+        <Qrcode
+          class="qrcode"
+          v-if="qrData"
+          :value="qrData"
+          :size="200"
+          render-as="svg"
+        />
         <div v-if="!qrData" class="qr-without">
           <p>Сгенерируйте QR</p>
         </div>
         <button @click="generateQR">Сгенерировать QR</button>
+
         <p style="color: #4ade80" v-if="qrData">✓ Отсканируй этот QR код</p>
+        <span v-if="qrData">
+          {{
+            formatTime(timeLeft) > "0"
+              ? `Действует: ${formatTime(timeLeft)}`
+              : "Действие QR кода истёк"
+          }}
+        </span>
         <span
           v-if="qrData"
           class="qr_help"
@@ -23,6 +37,14 @@
             {{ qrData }}
           </p>
         </div>
+        <button
+          style="background: none; color: gray"
+          @mouseover="(e) => (e.target.style.color = 'white')"
+          @mouseout="(e) => (e.target.style.color = 'gray')"
+          @click="addPhone = !addPhone"
+        >
+          Вернуться назад
+        </button>
       </section>
     </section>
 
@@ -34,11 +56,13 @@
         <div class="add-user">
           <h2>
             Устройства <span class="badge">{{ devices.length }}</span>
-            <button @click="loadDevices" class="sm">↻ Обновить</button>
           </h2>
-          <button class="sm" @click="addPhone = !addPhone">
-            {{ addPhone ? "Скрыть QR" : "Добавить устройство" }}
-          </button>
+          <div class="header-buttons">
+            <button @click="loadDevices" class="sm">↻ Обновить</button>
+            <button class="sm primary" @click="addPhone = !addPhone">
+              {{ addPhone ? "Скрыть QR" : "Добавить устройство" }}
+            </button>
+          </div>
         </div>
 
         <div v-if="devices.length === 0" class="empty">
@@ -155,6 +179,8 @@ const {
   addPhone,
   jsonCheck,
   generateQR,
+  timeLeft,
+  formatTime,
   loadDevices,
   setMode,
   removeDevice,
