@@ -182,32 +182,18 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
     };
 
     match request {
-        // ── Safe Mode ──────────────────────────────────────────────────────────
+        // ── Default Mode: системные команды ───────────────────────────────────────────────
         ClientRequest::Safe { command, params } => safe::execute(command, params),
 
-        // ── Automation Mode ────────────────────────────────────────────────────
-        ClientRequest::RunProfile { profile_id } => {
-            if device.mode == DeviceMode::Safe {
-                return ServerResponse::err(
-                    "Для этой команды нужен режим Automation или Developer.",
-                );
-            }
-            automation::run(&data_dir, &profile_id)
-        }
+        // ── Default Mode: профили автоматизации ─────────────────────────────────────────
+        ClientRequest::RunProfile { profile_id } => automation::run(&data_dir, &profile_id),
 
-        ClientRequest::ListProfiles => {
-            if device.mode == DeviceMode::Automation {
-                return ServerResponse::err(
-                    "Для этой команды нужен режим Automation или Developer.",
-                );
+        ClientRequest::ListProfiles => match automation::load(&data_dir) {
+            Ok(profiles) => {
+                ServerResponse::ok_data(serde_json::to_value(&profiles).unwrap_or_default())
             }
-            match automation::load(&data_dir) {
-                Ok(profiles) => {
-                    ServerResponse::ok_data(serde_json::to_value(&profiles).unwrap_or_default())
-                }
-                Err(e) => ServerResponse::err(e),
-            }
-        }
+            Err(e) => ServerResponse::err(e),
+        },
 
         // ── Developer Mode ─────────────────────────────────────────────────────
         ClientRequest::Shell { cmd, shell } => {
@@ -266,7 +252,7 @@ async fn pair(state: &AppState, remote_pubkey: &[u8], token: &str, name: &str) -
         serde_json::json!({
             "id":   device_id,
             "name": name,
-            "mode": "safe",
+            "mode": "default",
         }),
     );
 
@@ -275,7 +261,7 @@ async fn pair(state: &AppState, remote_pubkey: &[u8], token: &str, name: &str) -
     ServerResponse::ok_data(serde_json::json!({
         "device_id": device_id,
         "name": name,
-        "mode": "safe",
+        "mode": "default",
     }))
 }
 

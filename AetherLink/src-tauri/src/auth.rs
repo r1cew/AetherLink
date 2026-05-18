@@ -22,10 +22,9 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceMode {
-    /// Только готовые системные команды (shutdown, sleep, volume...).
-    Safe,
-    /// Запуск заранее созданных профилей.
-    Automation,
+    /// Default Mode — готовые системные команды (shutdown, sleep, volume...)
+    /// и запуск заранее созданных профилей автоматизации.
+    Default,
     /// Полный shell/powershell доступ. Выключен по умолчанию.
     Developer,
 }
@@ -66,7 +65,7 @@ impl DeviceRegistry {
             id: Uuid::new_v4().to_string(),
             name,
             public_key_b64: B64.encode(pubkey),
-            mode: DeviceMode::Automation, // по умолчанию — самый безопасный режим
+            mode: DeviceMode::Default,
         };
         self.devices.push(device.clone());
         device
@@ -79,6 +78,9 @@ pub fn load_registry(dir: &PathBuf) -> Result<DeviceRegistry, String> {
         return Ok(DeviceRegistry::default());
     }
     let text = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    if text.trim().is_empty() {
+        return Ok(DeviceRegistry::default());
+    }
     serde_json::from_str(&text).map_err(|e| e.to_string())
 }
 

@@ -7,7 +7,7 @@
 /// ├────────────────────────────┼──────────────────────────────────────────────┤
 /// │ generate_pairing_qr()      │ Генерирует данные для QR (JSON-строка)       │
 /// │ get_devices()              │ Список привязанных устройств                 │
-/// │ set_device_mode(id, mode)  │ Сменить режим устройства (safe/auto/dev)     │
+/// │ set_device_mode(id, mode)  │ Сменить режим устройства (default/developer) │
 /// │ remove_device(id)          │ Удалить устройство из реестра                │
 /// │ set_developer_mode(bool)   │ Глобальный рубильник Developer Mode          │
 /// │ get_profiles()             │ Список Automation-профилей                   │
@@ -112,7 +112,7 @@ async fn set_device_mode(
     mode: String,
 ) -> Result<(), String> {
     let new_mode = match mode.as_str() {
-        "default" => DeviceMode::Automation,
+        "default" => DeviceMode::Default,
         "developer" => DeviceMode::Developer,
         other => return Err(format!("Неизвестный режим: {other}")),
     };
