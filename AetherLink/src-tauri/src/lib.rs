@@ -9,8 +9,7 @@
 /// │ get_devices()              │ Список привязанных устройств                 │
 /// │ set_device_mode(id, mode)  │ Сменить режим устройства (default/developer) │
 /// │ remove_device(id)          │ Удалить устройство из реестра                │
-/// │ set_developer_mode(bool)   │ Глобальный рубильник Developer Mode          │
-/// │ get_profiles()             │ Список Automation-профилей                   │
+/// │ get_profiles()             │ Список профилей автоматизации                │
 /// │ create_profile(json)       │ Создать новый профиль                        │
 /// │ delete_profile(id)         │ Удалить профиль                              │
 /// └────────────────────────────┴──────────────────────────────────────────────┘
@@ -19,7 +18,11 @@
 ///   "device-paired"  →  { id, name, mode }   когда телефон успешно привязался
 use std::{sync::Arc, time::Duration};
 
-use tauri::Manager;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Manager,
+};
 use tokio::sync::Mutex;
 
 mod auth;
@@ -76,10 +79,10 @@ async fn generate_pairing_qr(state: tauri::State<'_, AppState>) -> Result<String
     };
 
     let qr = serde_json::json!({
-        "ip":               ip,
-        "port":             server::PORT,
+        "ip":                ip,
+        "port":              server::PORT,
         "server_public_key": server_public_key,
-        "pairing_token":    token,
+        "pairing_token":     token,
     });
 
     Ok(qr.to_string())
@@ -104,7 +107,7 @@ async fn get_devices(state: tauri::State<'_, AppState>) -> Result<serde_json::Va
     Ok(serde_json::Value::Array(list))
 }
 
-/// Сменить режим устройства: "safe" | "automation" | "developer".
+/// Сменить режим устройства: "default" | "developer".
 #[tauri::command]
 async fn set_device_mode(
     state: tauri::State<'_, AppState>,
@@ -134,38 +137,15 @@ async fn remove_device(state: tauri::State<'_, AppState>, device_id: String) -> 
     save_registry(&s.data_dir, &s.registry)
 }
 
-/// Глобальный рубильник Developer Mode.
-/// Даже если устройство имеет режим Developer — shell не работает без этого флага.
-#[tauri::command]
-async fn set_developer_mode(
-    state: tauri::State<'_, AppState>,
-    enabled: bool,
-) -> Result<(), String> {
-    state.inner().lock().await.developer_mode_enabled = enabled;
-    Ok(())
-}
-
-/// Список Automation-профилей (для отображения в UI ПК).
+/// Список профилей автоматизации (для отображения в UI ПК).
 #[tauri::command]
 async fn get_profiles(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let data_dir = state.inner().lock().await.data_dir.clone();
-
     let profiles = automation::load(&data_dir)?;
     serde_json::to_value(profiles).map_err(|e| e.to_string())
 }
 
 /// Создать новый профиль.
-///
-/// Пример вызова из Vue:
-/// ```
-/// await invoke('create_profile', {
-///   profile: {
-///     name: "Minecraft Server",
-///     description: "Запускает сервер",
-///     kind: { type: "run_bat", path: "C:\\servers\\mc\\start.bat" }
-///   }
-/// })
-/// ```
 #[tauri::command]
 async fn create_profile(
     state: tauri::State<'_, AppState>,
@@ -197,6 +177,66 @@ async fn delete_profile(
     automation::save(&data_dir, &profiles)
 }
 
+// ─── Трей ─────────────────────────────────────────────────────────────────────
+
+/// Создаёт иконку в системном трее и перехватывает закрытие окна.
+///
+/// Поведение:
+///   - Клик по иконке (ЛКМ) или пункт "Показать" → показывает/фокусирует окно.
+///   - Пункт "Выйти" → полное завершение процесса.
+///   - Кнопка закрытия окна (✕) → скрывает окно в трей, сервер продолжает работу.
+fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    // ── Меню трея ─────────────────────────────────────────────────────────────
+    let show = MenuItem::with_id(app, "show", "Показать", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Выйти", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&show, &quit])?;
+
+    TrayIconBuilder::new()
+        .icon(app.default_window_icon().unwrap().clone())
+        .menu(&menu)
+        .tooltip("AetherLink — сервер запущен")
+        // Пункты меню
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "show" => {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        // ЛКМ по иконке → показать окно
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let app = tray.app_handle();
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+        })
+        .build(app)?;
+
+    // ── Закрытие окна → свернуть в трей ──────────────────────────────────────
+    if let Some(window) = app.get_webview_window("main") {
+        let w = window.clone();
+        window.on_window_event(move |event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let _ = w.hide();
+                api.prevent_close();
+            }
+        });
+    }
+
+    Ok(())
+}
+
 // ─── Точка входа приложения ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -204,6 +244,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // ── Данные приложения ─────────────────────────────────────────────
             let data_dir = app
                 .path()
                 .app_data_dir()
@@ -219,15 +260,17 @@ pub fn run() {
                 server_keys,
                 registry,
                 pairing: None,
-                developer_mode_enabled: false,
                 app: app.handle().clone(),
             }));
 
             app.manage(state.clone());
 
-            // Запускаем TCP-сервер и UDP-beacon в фоне
+            // ── Сетевые службы ────────────────────────────────────────────────
             tauri::async_runtime::spawn(server::run(state.clone()));
             tauri::async_runtime::spawn(beacon::run());
+
+            // ── Трей ──────────────────────────────────────────────────────────
+            setup_tray(app)?;
 
             Ok(())
         })
@@ -236,7 +279,6 @@ pub fn run() {
             get_devices,
             set_device_mode,
             remove_device,
-            set_developer_mode,
             get_profiles,
             create_profile,
             delete_profile,

@@ -176,10 +176,7 @@ async fn dispatch(
 }
 
 async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState) -> ServerResponse {
-    let (data_dir, dev_mode_on) = {
-        let s = state.lock().await;
-        (s.data_dir.clone(), s.developer_mode_enabled)
-    };
+    let data_dir = state.lock().await.data_dir.clone();
 
     match request {
         // ── Default Mode: системные команды ───────────────────────────────────────────────
@@ -199,11 +196,6 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
         ClientRequest::Shell { cmd, shell } => {
             if device.mode != DeviceMode::Developer {
                 return ServerResponse::err("Для Shell нужен режим Developer.");
-            }
-            if !dev_mode_on {
-                return ServerResponse::err(
-                    "Developer Mode отключён на сервере. Включите в настройках.",
-                );
             }
             shell::execute(cmd, shell)
         }

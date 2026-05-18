@@ -4,6 +4,10 @@
 /// Никакого произвольного ввода от пользователя — только предустановленные действия.
 use std::process::Command;
 
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 use serde_json::Value;
 
 use crate::protocol::{SafeCommand, ServerResponse};
@@ -38,10 +42,10 @@ pub fn execute(command: SafeCommand, params: Value) -> ServerResponse {
 
 fn shutdown() -> Result<String, String> {
     Command::new("shutdown")
-        .args(["/s", "/t", "10"])
+        .args(["/s", "/t", "5"])
         .spawn()
         .map_err(|e| e.to_string())?;
-    Ok("Выключение через 10 секунд".into())
+    Ok("Выключение через 5 секунд".into())
 }
 
 fn sleep() -> Result<String, String> {
@@ -118,10 +122,21 @@ public class VolumeControl {{
 // ─── Вспомогательные ─────────────────────────────────────────────────────────
 
 fn run_ps(script: &str) -> Result<String, String> {
-    let out = Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", script])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new("powershell");
+
+    cmd.args([
+        "-NoProfile",
+        "-NonInteractive",
+        "-WindowStyle",
+        "Hidden",
+        "-Command",
+        script,
+    ]);
+
+    #[cfg(windows)]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let out = cmd.output().map_err(|e| e.to_string())?;
 
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())

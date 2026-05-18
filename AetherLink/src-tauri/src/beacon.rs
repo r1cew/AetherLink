@@ -14,7 +14,7 @@ pub async fn run() {
         if let Err(e) = broadcast() {
             eprintln!("[beacon] broadcast error: {e}");
         }
-        tokio::time::sleep(Duration::from_secs(3)).await;
+        tokio::time::sleep(Duration::from_secs(2)).await;
     }
 }
 

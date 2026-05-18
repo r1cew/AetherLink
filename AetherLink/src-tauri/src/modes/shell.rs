@@ -1,7 +1,7 @@
 /// Developer Mode — исполнение произвольных команд в shell.
 ///
 /// ВНИМАНИЕ: режим выключен по умолчанию.
-/// Требует: device.mode == Developer && state.developer_mode_enabled == true.
+/// Требует: device.mode == Developer.
 /// Команда выполняется синхронно, stdout+stderr возвращаются в ответе.
 use std::process::Command;
 
@@ -10,12 +10,12 @@ use crate::protocol::{ServerResponse, ShellType};
 pub fn execute(cmd: String, shell: ShellType) -> ServerResponse {
     let result = match shell {
         ShellType::Powershell => run_powershell(&cmd),
-        ShellType::Cmd        => run_cmd(&cmd),
+        ShellType::Cmd => run_cmd(&cmd),
     };
 
     match result {
         Ok(output) => ServerResponse::ok_output(output),
-        Err(e)     => ServerResponse::err(e),
+        Err(e) => ServerResponse::err(e),
     }
 }
 

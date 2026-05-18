@@ -90,36 +90,56 @@ export default function App() {
     setScreen("control");
   }
 
+  // ── авто-подключение после скана QR ─────────────────────────────────────────
+  async function autoConnect(content: string) {
+    setLoading(true);
+    msg("⏳ Подключение...");
+    try {
+      const id = await invoke<string>("pair_with_qr", {
+        qrJson: content.trim(),
+        name: phoneName,
+        nickname: pcName,
+      });
+      const list = await invoke<Server[]>("get_servers");
+      setServers(list);
+      const newServer = list.find((s) => s.id === id);
+      if (newServer) {
+        setActive(newServer);
+        setLog("");
+        await loadProfiles(newServer);
+        setScreen("control");
+      } else {
+        setScreen("servers");
+      }
+    } catch (e) {
+      msg(`❌ ${e}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ── функция запуска камеры ─────────────────────────────────────────────────────
   async function startQrScan() {
     setLog("");
     try {
-      // 1. Проверяем текущий статус разрешения в Android
       let permission = await checkPermissions();
-
-      // 2. Если разрешение еще не выдано (статус 'prompt' или 'prompt-with-rationale')
       if (permission !== "granted") {
         msg("Запрашиваю доступ к камере...");
-        permission = await requestPermissions(); // Вот тут Android покажет системное окно
+        permission = await requestPermissions();
       }
-
-      // 3. Если пользователь всё-таки отказал в доступе
       if (permission !== "granted") {
-        msg(
-          "❌ Доступ к камере отклонен. Вы можете включить его вручную в настройках телефона.",
-        );
+        msg("❌ Доступ к камере отклонен. Включите в настройках телефона.");
         return;
       }
 
-      // 4. Если доступ успешно получен (или уже был) — включаем камеру
       setIsScanning(true);
-      const result = await scan({
-        formats: [Format.QRCode],
-      });
+      const result = await scan({ formats: [Format.QRCode] });
 
-      if (result && result.content) {
-        setQrText(result.content);
-        msg("QR-код успешно считан!");
+      // Сначала убираем прозрачность WebView, чтобы не было чёрного экрана
+      setIsScanning(false);
+
+      if (result?.content) {
+        await autoConnect(result.content);
       }
     } catch (e) {
       msg(`Ошибка камеры: ${e}`);
@@ -309,27 +329,9 @@ export default function App() {
             📷
           </div>
           <p className="pair-hint">
-            Нажмите на иконку камеры, чтобы отсканировать QR на ПК.
+            Нажмите кнопку ниже и наведите камеру на QR-код — подключение
+            произойдёт автоматически.
           </p>
-
-          <button
-            className="btn-primary"
-            onClick={startQrScan}
-            style={{ marginBottom: "10px" }}
-          >
-            [📷] Начать сканирование
-          </button>
-
-          <hr style={{ borderColor: "var(--border)", margin: "8px 0" }} />
-
-          <label className="field-label">Или вставьте JSON вручную:</label>
-          <textarea
-            className="qr-input"
-            placeholder='{"ip":"192.168.1.5","port":8080,...}'
-            value={qrText}
-            onChange={(e) => setQrText(e.target.value)}
-            rows={3}
-          />
 
           <label className="field-label">Имя телефона (видно на ПК)</label>
           <input
@@ -347,10 +349,29 @@ export default function App() {
 
           <button
             className="btn-primary"
+            onClick={startQrScan}
+            disabled={loading}
+            style={{ marginBottom: "4px" }}
+          >
+            {loading ? "⏳ Подключение…" : "[📷] Сканировать QR"}
+          </button>
+
+          <hr style={{ borderColor: "var(--border)", margin: "8px 0" }} />
+
+          <label className="field-label">Или вставьте JSON вручную:</label>
+          <textarea
+            className="qr-input"
+            placeholder='{"ip":"192.168.1.5","port":8080,...}'
+            value={qrText}
+            onChange={(e) => setQrText(e.target.value)}
+            rows={3}
+          />
+          <button
+            className="btn-primary"
             onClick={pair}
             disabled={loading || !qrText.trim()}
           >
-            {loading ? "Подключение…" : "Привязать"}
+            {loading ? "⏳ Подключение…" : "Привязать вручную"}
           </button>
 
           {log && <div className="log-box">{log}</div>}

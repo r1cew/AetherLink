@@ -35,9 +35,6 @@ pub struct AppStateInner {
     /// Активная сессия паринга (есть пока показан QR).
     pub pairing: Option<PairingSession>,
 
-    /// Developer Mode включён глобально (дополнительный рубильник безопасности).
-    pub developer_mode_enabled: bool,
-
     /// App handle для отправки событий во фронтенд.
     pub app: tauri::AppHandle,
 }
