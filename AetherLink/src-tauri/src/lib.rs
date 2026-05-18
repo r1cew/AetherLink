@@ -5,14 +5,14 @@
 /// ┌────────────────────────────┬──────────────────────────────────────────────┐
 /// │ Команда                    │ Назначение                                   │
 /// ├────────────────────────────┼──────────────────────────────────────────────┤
-/// │ generate_pairing_qr()      │ Генерирует данные для QR (JSON-строка)        │
-/// │ get_devices()              │ Список привязанных устройств                  │
-/// │ set_device_mode(id, mode)  │ Сменить режим устройства (safe/auto/dev)      │
-/// │ remove_device(id)          │ Удалить устройство из реестра                 │
-/// │ set_developer_mode(bool)   │ Глобальный рубильник Developer Mode           │
-/// │ get_profiles()             │ Список Automation-профилей                    │
-/// │ create_profile(json)       │ Создать новый профиль                         │
-/// │ delete_profile(id)         │ Удалить профиль                               │
+/// │ generate_pairing_qr()      │ Генерирует данные для QR (JSON-строка)       │
+/// │ get_devices()              │ Список привязанных устройств                 │
+/// │ set_device_mode(id, mode)  │ Сменить режим устройства (safe/auto/dev)     │
+/// │ remove_device(id)          │ Удалить устройство из реестра                │
+/// │ set_developer_mode(bool)   │ Глобальный рубильник Developer Mode          │
+/// │ get_profiles()             │ Список Automation-профилей                   │
+/// │ create_profile(json)       │ Создать новый профиль                        │
+/// │ delete_profile(id)         │ Удалить профиль                              │
 /// └────────────────────────────┴──────────────────────────────────────────────┘
 ///
 /// Tauri-события (шлются во фронтенд из Rust):
@@ -112,8 +112,7 @@ async fn set_device_mode(
     mode: String,
 ) -> Result<(), String> {
     let new_mode = match mode.as_str() {
-        "safe" => DeviceMode::Safe,
-        "automation" => DeviceMode::Automation,
+        "default" => DeviceMode::Automation,
         "developer" => DeviceMode::Developer,
         other => return Err(format!("Неизвестный режим: {other}")),
     };
@@ -150,6 +149,7 @@ async fn set_developer_mode(
 #[tauri::command]
 async fn get_profiles(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let data_dir = state.inner().lock().await.data_dir.clone();
+
     let profiles = automation::load(&data_dir)?;
     serde_json::to_value(profiles).map_err(|e| e.to_string())
 }

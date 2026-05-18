@@ -196,7 +196,7 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
         }
 
         ClientRequest::ListProfiles => {
-            if device.mode == DeviceMode::Safe {
+            if device.mode == DeviceMode::Automation {
                 return ServerResponse::err(
                     "Для этой команды нужен режим Automation или Developer.",
                 );

@@ -66,7 +66,7 @@ impl DeviceRegistry {
             id: Uuid::new_v4().to_string(),
             name,
             public_key_b64: B64.encode(pubkey),
-            mode: DeviceMode::Safe, // по умолчанию — самый безопасный режим
+            mode: DeviceMode::Automation, // по умолчанию — самый безопасный режим
         };
         self.devices.push(device.clone());
         device
