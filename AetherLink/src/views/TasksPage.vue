@@ -101,7 +101,7 @@ const fakeDataBase = [
   },
 ];
 
-const { log, addLogEntry } = useAetherLink();
+const { log, addLog } = useAetherLink(); // Исправлено: addLog вместо addLogEntry
 
 // Подсчет общего количества задач
 const totalTasksCount = computed(() => {
@@ -112,27 +112,20 @@ const totalTasksCount = computed(() => {
 
 const executeTask = (device: string, task: string) => {
   // Логика выполнения задачи
-  if (addLogEntry) {
-    addLogEntry(`▶ Выполняется задача "${task}" на устройстве ${device}`);
-  }
+  addLog(`▶ Выполняется задача "${task}" на устройстве ${device}`);
 
   // Здесь будет вызов API или другой логики
   setTimeout(() => {
-    if (addLogEntry) {
-      addLogEntry(`✅ Задача "${task}" выполнена на ${device}`);
-    }
+    addLog(`✅ Задача "${task}" выполнена на ${device}`);
   }, 1000);
 };
 
 const refreshTasks = () => {
-  if (addLogEntry) {
-    addLogEntry(`🔄 Обновление списка задач...`);
-  }
+  addLog(`🔄 Обновление списка задач...`);
+
   // Здесь будет логика обновления задач
   setTimeout(() => {
-    if (addLogEntry) {
-      addLogEntry(`✅ Список задач обновлен`);
-    }
+    addLog(`✅ Список задач обновлен`);
   }, 500);
 };
 </script>

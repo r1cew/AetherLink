@@ -151,8 +151,6 @@ const fakeDataBase = [
 const {
   qrData,
   devices,
-  profiles,
-  devMode,
   log,
   addPhone,
   jsonCheck,
@@ -160,9 +158,6 @@ const {
   loadDevices,
   setMode,
   removeDevice,
-  toggleDevMode,
-  createTestProfile,
-  deleteProfile,
   showJson,
 } = useAetherLink();
 </script>
