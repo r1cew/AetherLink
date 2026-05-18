@@ -1,7 +1,6 @@
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { ref, onMounted, onUnmounted } from "vue";
 
 export function useAetherLink() {
   // ── состояние ──────────────────────────────────────────────────────────────────

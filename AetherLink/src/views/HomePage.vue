@@ -39,8 +39,6 @@
         </div>
         <button
           style="background: none; color: gray"
-          @mouseover="(e) => (e.target.style.color = 'white')"
-          @mouseout="(e) => (e.target.style.color = 'gray')"
           @click="addPhone = !addPhone"
         >
           Вернуться назад
