@@ -10,6 +10,7 @@ export function useAetherLink() {
   const devMode = ref(false);
   const log = ref<string[]>([]);
   const jsonCheck = ref(false);
+  const addPhone = ref(false);
 
   // ── лог ───────────────────────────────────────────────────────────────────────
   function addLog(msg: string) {
@@ -135,6 +136,7 @@ export function useAetherLink() {
     devices,
     profiles,
     devMode,
+    addPhone,
     log,
     jsonCheck,
     // Формы

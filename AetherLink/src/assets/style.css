@@ -10,9 +10,39 @@ body {
   margin: 0 auto;
   min-height: 90vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 2rem;
   padding: 2rem;
+}
+
+.app_without_qr {
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 90vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.add-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  .add-user {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-user .sm {
+    align-self: flex-start;
+  }
 }
 
 .app_part_1 {
@@ -53,6 +83,16 @@ body {
   border-left: 3px solid #d8323c;
 }
 
+.qr-without {
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #d8323c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
 .qr-box p {
   margin: 0.5rem 0;
 }
