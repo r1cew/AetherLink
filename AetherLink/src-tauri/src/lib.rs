@@ -16,8 +16,8 @@
 ///
 /// Tauri-события (шлются во фронтенд из Rust):
 ///   "device-paired"  →  { id, name, mode }   когда телефон успешно привязался
-use std::{sync::Arc, time::Duration};
-
+use std::{collections::VecDeque, sync::Arc, time::Duration};
+use tauri::Emitter;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -237,11 +237,49 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+// ─── Логи ─────────────────────────────────────────────────────────────────────
+
+pub struct LogState {
+    pub logs: std::sync::Mutex<VecDeque<String>>,
+}
+
+#[tauri::command]
+async fn add_log(
+    message: String,
+    state: tauri::State<'_, LogState>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    // Блокируем поток синхронно, быстро делаем дело и отпускаем
+    let mut logs = state.logs.lock().map_err(|_| "Lock poisoned")?;
+
+    logs.push_front(message.clone());
+
+    if logs.len() > 200 {
+        logs.pop_back();
+    }
+
+    // Дропаем lock явно, чтобы не держать его во время эмита события (хорошая привычка)
+    drop(logs);
+
+    app.emit("new-log", message).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_logs(state: tauri::State<'_, LogState>) -> Result<Vec<String>, String> {
+    let logs = state.logs.lock().map_err(|_| "Lock poisoned")?;
+    Ok(logs.iter().cloned().collect())
+}
+
 // ─── Точка входа приложения ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(LogState {
+            logs: std::sync::Mutex::new(VecDeque::new()),
+        })
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // ── Данные приложения ─────────────────────────────────────────────

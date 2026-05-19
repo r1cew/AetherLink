@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "aetherlink",
-        "width": 720,
-        "height": 820,
+        "width": 1080,
+        "height": 780,
         "minWidth": 600,
         "minHeight": 500
       }
