@@ -204,13 +204,13 @@
 /* Анимация пульсации для активной карточки */
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(216, 50, 60, 0.4);
+    box-shadow: 0 0 0 10 rgba(216, 50, 60, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(216, 50, 60, 0);
+    box-shadow: 0 0 0 10px rgba(216, 50, 60, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(216, 50, 60, 0);
+    box-shadow: 0 0 0 10 rgba(216, 50, 60, 0);
   }
 }
 
@@ -221,14 +221,8 @@
 /* Адаптивность */
 @media (max-width: 768px) {
   .navigation {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: auto;
+    height: 70px;
     max-height: none;
-    border-radius: 24px 24px 0 0;
-    padding: 1rem;
     z-index: 1000;
   }
 
@@ -242,12 +236,33 @@
   .nav-grid {
     flex-direction: row;
     gap: 0.5rem;
+    height: 20px;
   }
 
   .nav-card {
     flex: 1;
     justify-content: center;
+    background: none;
     padding: 0.75rem;
+    border: none;
+    position: relative;
+  }
+
+  .nav-card:hover {
+    transform: none;
+    border-color: transparent;
+    background: none;
+  }
+
+  .nav-card.active {
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .nav-card::before {
+    display: none;
   }
 
   .card-info {
@@ -256,18 +271,24 @@
 
   .card-icon {
     width: 40px;
+    background: none;
     height: 40px;
   }
 
+  .nav-card.active .card-icon {
+    background: none;
+    transform: scale(1.05);
+  }
+
+  .nav-card.active .card-icon svg {
+    stroke: #d8323c;
+  }
+
   .card-strip {
-    top: auto;
-    bottom: 0;
-    width: 100%;
-    height: 2px;
-    transform: scaleX(0);
+    display: none;
   }
 
   .nav-card.active .card-strip {
-    transform: scaleX(1);
+    transform: translateX(-50%) scaleX(1);
   }
 }

@@ -32,6 +32,37 @@
   padding-right: 0.5rem;
 }
 
+.app_part_2::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app_part_2::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.app_part_2::-webkit-scrollbar-thumb {
+  background: rgba(216, 50, 60, 0.4);
+  border-radius: 3px;
+}
+
+.app_part_2 section {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.app_part_2 h2 {
+  font-size: 18px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+}
+
 /* Стили для кнопок в хедере */
 .header-buttons {
   display: flex;
@@ -50,7 +81,90 @@ button.primary:hover {
   border-color: #d8323c;
 }
 
-/* Стили для модального окна */
+/* Общие стили для кнопок */
+button {
+  background: rgba(216, 50, 60, 0.15);
+  border: 1px solid rgba(216, 50, 60, 0.3);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: rgba(216, 50, 60, 0.3);
+  border-color: #d8323c;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 12px;
+}
+
+.badge {
+  background: rgba(216, 50, 60, 0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+/* Tasks header */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Tasks container */
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.profile:hover {
+  border-color: rgba(216, 50, 60, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.profile-btns {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.profile-btns button {
+  height: 2rem;
+}
+
+/* Модальное окно */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -186,6 +300,27 @@ button.primary:hover {
   transform: translateY(-1px);
 }
 
+/* Logs */
+.log-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem;
+  max-height: 250px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.log-line {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.log-line:first-child {
+  color: #4ade80;
+}
+
 /* Анимации */
 @keyframes fadeIn {
   from {
@@ -209,9 +344,21 @@ button.primary:hover {
 
 /* Адаптация для мобильных */
 @media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
   .tasks-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .tasks-header h2 {
+    justify-content: flex-start;
+    text-align: left;
+    margin: 0;
   }
 
   .header-buttons {
@@ -226,209 +373,6 @@ button.primary:hover {
     width: 95%;
     margin: 1rem;
   }
-}
-
-.app_part_2::-webkit-scrollbar {
-  width: 6px;
-}
-
-.app_part_2::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
-.app_part_2::-webkit-scrollbar-thumb {
-  background: rgba(216, 50, 60, 0.4);
-  border-radius: 3px;
-}
-
-.app_part_2 section {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 20px;
-  padding: 1.25rem;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-}
-
-.app_part_2 h2 {
-  font-size: 18px;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ffffff;
-}
-
-.badge {
-  background: rgba(216, 50, 60, 0.3);
-  padding: 0.2rem 0.5rem;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: normal;
-}
-
-.tasks-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-button {
-  background: rgba(216, 50, 60, 0.15);
-  border: 1px solid rgba(216, 50, 60, 0.3);
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-button:hover {
-  background: rgba(216, 50, 60, 0.3);
-  border-color: #d8323c;
-  transform: translateY(-1px);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button.sm {
-  padding: 0.25rem 0.75rem;
-  font-size: 12px;
-}
-
-.tasks-container {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1vw;
-  transition: 0.3s;
-  gap: 1rem;
-}
-
-.profile {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 10px;
-  border-radius: 16px;
-  transition: 0.3s;
-}
-
-.profile:hover {
-  transform: scale(1.01);
-  background-color: #b8282f33;
-  transition: 0.3s;
-}
-
-.profile-btns {
-  display: flex;
-  gap: 1vw;
-  align-items: center;
-  justify-content: end;
-}
-
-.profile-btns button {
-  height: 1.3vw;
-}
-
-.device-tasks {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-}
-
-.device-tasks:hover {
-  border-color: rgba(216, 50, 60, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.device-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #d8323c;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.task-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(4px);
-}
-
-.task-name {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.task-btn {
-  padding: 0.25rem 0.75rem;
-  font-size: 12px;
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.3);
-}
-
-.task-btn:hover {
-  background: rgba(74, 222, 128, 0.3);
-  border-color: #4ade80;
-}
-
-.empty-tasks {
-  text-align: center;
-  padding: 1rem;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
-  font-style: italic;
-}
-
-.log-box {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 0.75rem;
-  max-height: 250px;
-  overflow-y: auto;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-.log-line {
-  padding: 0.25rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.log-line:first-child {
-  color: #4ade80;
-}
-
-@media (max-width: 768px) {
-  .app {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1rem;
-  }
 
   .app_part_1 {
     position: static;
@@ -438,5 +382,17 @@ button.sm {
 
   .app_part_2 {
     max-height: none;
+  }
+
+  .profile {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-btns {
+    justify-content: stretch;
+  }
+
+  .profile-btns button {
+    flex: 1;
   }
 }

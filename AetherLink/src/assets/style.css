@@ -27,8 +27,8 @@ body {
 
 .add-user {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1rem;
@@ -93,6 +93,7 @@ body {
   justify-content: center;
   font-weight: 500;
 }
+
 .qr-box p {
   margin: 0.5rem 0;
 }
@@ -270,12 +271,6 @@ button.active {
   color: #cccccc;
 }
 
-.choose-device {
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-}
-
 .device-actions {
   display: flex;
   gap: 0.5rem;
@@ -286,6 +281,7 @@ button.active {
   padding: 0.25rem 0.75rem;
   font-size: 12px;
 }
+
 .header-buttons {
   display: flex;
   gap: 0.75rem;
@@ -297,7 +293,6 @@ button.active {
   border-radius: 10px;
 }
 
-/* Стиль для основной кнопки */
 button.primary {
   background: rgba(216, 50, 60, 0.25);
   border-color: rgba(216, 50, 60, 0.5);
@@ -337,81 +332,6 @@ button.primary:hover {
   left: 2px;
   background: rgba(255, 255, 255, 0.5);
   transition: all 0.2s ease;
-}
-
-.tasks-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.device-tasks {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.device-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #d8323c;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.task-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(4px);
-}
-
-.task-name {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.task-btn {
-  padding: 0.25rem 0.75rem;
-  font-size: 12px;
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.3);
-}
-
-.task-btn:hover {
-  background: rgba(74, 222, 128, 0.3);
-  border-color: #4ade80;
-}
-
-.empty-tasks {
-  text-align: center;
-  padding: 1rem;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
-  font-style: italic;
-}
-
-.choose-device {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
 .toggle input:checked {
@@ -454,6 +374,7 @@ button.primary:hover {
   font-weight: 500;
 }
 
+/* Адаптивность для мобильных */
 @media (max-width: 768px) {
   .app {
     grid-template-columns: 1fr;
@@ -461,8 +382,32 @@ button.primary:hover {
     padding: 1rem;
   }
 
-  .app_part_1 h1 {
-    font-size: 48px;
+  .add-user,
+  .tasks-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-user .sm,
+  .tasks-header .sm {
+    align-self: flex-start;
+  }
+
+  .header-buttons {
+    justify-content: stretch;
+  }
+
+  .header-buttons button {
+    flex: 1;
+    margin-bottom: 0;
+    width: auto;
+    height: auto;
+  }
+
+  .app_part_1 {
+    position: static;
+    max-height: none;
+    padding: 1rem;
   }
 
   .app_part_2 {
