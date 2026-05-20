@@ -305,7 +305,34 @@ button.sm {
 .tasks-container {
   display: flex;
   flex-direction: column;
+  margin-top: 1vw;
+  transition: 0.3s;
   gap: 1rem;
+}
+
+.profile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 10px;
+  border-radius: 16px;
+  transition: 0.3s;
+}
+
+.profile:hover {
+  transform: scale(1.01);
+  background-color: #b8282f33;
+  transition: 0.3s;
+}
+
+.profile-btns {
+  display: flex;
+  gap: 1vw;
+  align-items: center;
+  justify-content: end;
+}
+
+.profile-btns button {
+  height: 1.3vw;
 }
 
 .device-tasks {

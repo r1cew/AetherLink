@@ -33,10 +33,7 @@
               >
                 Удалить
               </button>
-              <button
-                class="sm"
-                @click="deleteProfile(profile.id, profile.name)"
-              >
+              <button class="sm" @click="runProfile(profile.id)">
                 Запустить
               </button>
             </div>
@@ -136,6 +133,7 @@ const {
   newProfilePath,
   newProfileDescription,
   newProfileType,
+  runProfile,
   newProfileArgs,
   newProfileScript,
   profiles,

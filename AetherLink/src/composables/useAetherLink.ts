@@ -31,7 +31,7 @@ export function useAetherLink() {
     }
   }
 
-  // ── загрузка ──────────────────────────────────────────────────────────────────
+  // ── загрузка и запуск профиля ──────────────────────────────────────────────────────────────────
   async function loadDevices() {
     try {
       devices.value = await invoke("get_devices");
@@ -50,6 +50,15 @@ export function useAetherLink() {
     } catch (e) {
       await add_log(`Ошибка загрузки профилей: ${e}`);
       console.error("Failed to load profiles:", e);
+    }
+  }
+
+  async function runProfile(id: string) {
+    try {
+      await invoke("run_profile_local", { profileId: id });
+      add_log(`Профиль "${id}" запущен`);
+    } catch (e) {
+      add_log(`Ошибка: ${e}`);
     }
   }
 
@@ -251,6 +260,7 @@ export function useAetherLink() {
     toggleDevMode,
     createProfile,
     get_logs,
+    runProfile,
     add_log,
     deleteProfile,
     showJson,
