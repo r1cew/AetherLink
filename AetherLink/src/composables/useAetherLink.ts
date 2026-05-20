@@ -2,42 +2,58 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
-export function useAetherLink() {
-  // ── состояние ──────────────────────────────────────────────────────────────────
-  const qrData = ref("");
-  const devices = ref<any[]>([]);
-  const profiles = ref<any[]>([]);
-  const devMode = ref(false);
-  const log = ref<string[]>([]);
-  const jsonCheck = ref(false);
-  const addPhone = ref(false);
+// ── состояние ──────────────────────────────────────────────────────────────────
+const qrData = ref("");
+const devices = ref<any[]>([]);
+const profiles = ref<any[]>([]);
+const devMode = ref(false);
+const jsonCheck = ref(false);
+const addPhone = ref(false);
+const logData = ref<string[]>([]);
+let initialized = false;
 
-  // ── лог ───────────────────────────────────────────────────────────────────────
-  function addLog(msg: string) {
-    log.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
-    if (log.value.length > 50) log.value.pop();
+export function useAetherLink() {
+  // Логи
+  async function get_logs() {
+    try {
+      logData.value = await invoke("get_logs");
+    } catch (e) {
+      console.error("Failed to get logs:", e);
+    }
+  }
+
+  async function add_log(message: string) {
+    try {
+      await invoke("add_log", { message });
+      await get_logs();
+    } catch (e) {
+      console.error("Failed to add log:", e);
+    }
   }
 
   // ── загрузка ──────────────────────────────────────────────────────────────────
   async function loadDevices() {
     try {
       devices.value = await invoke("get_devices");
-      addLog(`Устройств: ${devices.value.length}`);
+      await add_log(`Подключенных устройств: ${devices.value.length}`);
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
+      await add_log(`Ошибка загрузки устройств: ${e}`);
+      console.error("Failed to load devices:", e);
+      devices.value = [];
     }
   }
 
   async function loadProfiles() {
     try {
       profiles.value = await invoke("get_profiles");
+      await add_log(`Профилей: ${profiles.value.length}`);
     } catch (e) {
-      addLog(`Ошибка профилей: ${e}`);
+      await add_log(`Ошибка загрузки профилей: ${e}`);
+      console.error("Failed to load profiles:", e);
     }
   }
 
   // ── паринг ────────────────────────────────────────────────────────────────────
-
   const timeLeft = ref(120);
   const timerActive = ref(false);
   let timerInterval: number | null = null;
@@ -71,42 +87,39 @@ export function useAetherLink() {
     timerActive.value = false;
   };
 
-  onUnmounted(() => {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-    }
-  });
-
   async function generateQR() {
     try {
       qrData.value = await invoke("generate_pairing_qr");
-      addLog("QR сгенерирован — действителен 120 сек");
+      await add_log(`QR код сгенерирован`);
       timeLeft.value = 120;
       stopTimer();
       startTimer();
     } catch (e) {
-      addLog(`Ошибка QR: ${e}`);
+      await add_log(`Ошибка генерации QR: ${e}`);
+      console.error("QR generation error:", e);
     }
   }
 
   // ── устройства ────────────────────────────────────────────────────────────────
-  async function setMode(id: string, mode: string) {
+  async function setMode(id: string, mode: string, name: string) {
     try {
       await invoke("set_device_mode", { deviceId: id, mode });
-      addLog(`Режим устройства → ${mode}`);
-      loadDevices();
+      await add_log(`Устройство "${name}": режим изменён на ${mode}`);
+      await loadDevices();
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
+      await add_log(`Ошибка смены режима для ${id}: ${e}`);
+      console.error("Failed to set mode:", e);
     }
   }
 
   async function removeDevice(id: string) {
     try {
       await invoke("remove_device", { deviceId: id });
-      addLog("Устройство удалено");
-      loadDevices();
+      await add_log(`Устройство ${id} удалено`);
+      await loadDevices();
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
+      await add_log(`Ошибка удаления устройства ${id}: ${e}`);
+      console.error("Failed to remove device:", e);
     }
   }
 
@@ -114,9 +127,12 @@ export function useAetherLink() {
   async function toggleDevMode() {
     try {
       await invoke("set_developer_mode", { enabled: devMode.value });
-      addLog(`Developer Mode: ${devMode.value ? "ВКЛ" : "ВЫКЛ"}`);
+      await add_log(
+        `Developer mode: ${devMode.value ? "включён" : "выключен"}`,
+      );
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
+      await add_log(`Ошибка переключения dev mode: ${e}`);
+      console.error("Failed to toggle dev mode:", e);
     }
   }
 
@@ -131,7 +147,6 @@ export function useAetherLink() {
   async function createProfile() {
     if (!newProfileName.value) return;
 
-    // Сборка объекта "kind" на основании выбранного типа
     let kindPayload: Record<string, any> = {
       type: newProfileType.value,
     };
@@ -140,40 +155,43 @@ export function useAetherLink() {
       kindPayload.path = newProfilePath.value;
     } else if (newProfileType.value === "run_exe") {
       kindPayload.path = newProfilePath.value;
-      kindPayload.args = newProfileArgs.value; // Передаем массив строк
+      kindPayload.args = newProfileArgs.value;
     } else if (newProfileType.value === "power_shell") {
-      kindPayload.script = newProfileScript.value; // Только скрипт, без path и args
+      kindPayload.script = newProfileScript.value;
     }
 
     try {
-      // Отправка структурированных данных в бэкенд Tauri
-      const id = await invoke("create_profile", {
+      await invoke("create_profile", {
         name: newProfileName.value,
         description: newProfileDescription.value,
         kind: kindPayload,
       });
 
-      addLog(`Профиль создан: ${id}`);
+      await add_log(
+        `Профиль создан: ${newProfileName.value} (${newProfileType.value})`,
+      );
 
-      // Очистка состояния стейта в composable
       newProfileName.value = "";
       newProfilePath.value = "";
       newProfileArgs.value = [];
       newProfileScript.value = "";
 
-      loadProfiles();
+      await loadProfiles();
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
-      throw e; // Пробрасываем ошибку для обработки в handleCreateTask
+      await add_log(`Ошибка создания профиля: ${e}`);
+      console.error("Failed to create profile:", e);
+      throw e;
     }
   }
-  async function deleteProfile(id: string) {
+
+  async function deleteProfile(id: string, name: string) {
     try {
       await invoke("delete_profile", { profileId: id });
-      addLog("Профиль удалён");
-      loadProfiles();
+      await add_log(`Профиль "${name}" удалён`);
+      await loadProfiles();
     } catch (e) {
-      addLog(`Ошибка: ${e}`);
+      await add_log(`Ошибка удаления профиля ${id}: ${e}`);
+      console.error("Failed to delete profile:", e);
     }
   }
 
@@ -186,17 +204,24 @@ export function useAetherLink() {
   }
 
   // ── init ──────────────────────────────────────────────────────────────────────
+  let unlisten: (() => void) | null = null;
+
   onMounted(async () => {
-    loadDevices();
-    loadProfiles();
+    if (initialized) return;
 
-    // Слушаем событие паринга с телефона
-    await listen("device-paired", (event: any) => {
-      addLog(`Телефон привязан: ${event.payload.name}`);
-      loadDevices();
+    initialized = true;
+
+    await loadDevices();
+    await loadProfiles();
+    await get_logs();
+
+    unlisten = await listen("device-paired", async () => {
+      await loadDevices();
     });
+  });
 
-    addLog("Сервер запущен на :8080 | Beacon на :9999");
+  onUnmounted(() => {
+    stopTimer();
   });
 
   return {
@@ -206,7 +231,6 @@ export function useAetherLink() {
     profiles,
     devMode,
     addPhone,
-    log,
     jsonCheck,
     timeLeft,
     formatTime,
@@ -217,14 +241,17 @@ export function useAetherLink() {
     newProfileType,
     newProfileArgs,
     newProfileScript,
+    logData,
     // Методы
     generateQR,
-    addLog,
+    loadProfiles,
     loadDevices,
     setMode,
     removeDevice,
     toggleDevMode,
     createProfile,
+    get_logs,
+    add_log,
     deleteProfile,
     showJson,
   };

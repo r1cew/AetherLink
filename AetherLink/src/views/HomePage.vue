@@ -71,13 +71,13 @@
           <span :class="['mode-badge', device.mode]">{{ device.mode }}</span>
           <div class="device-actions">
             <button
-              @click="setMode(device.id, 'default')"
+              @click="setMode(device.id, 'default', device.name)"
               :class="{ active: device.mode === 'default' }"
             >
               Default
             </button>
             <button
-              @click="setMode(device.id, 'developer')"
+              @click="setMode(device.id, 'developer', device.name)"
               :class="{ active: device.mode === 'developer' }"
             >
               Dev
@@ -86,48 +86,7 @@
           </div>
         </div>
       </section>
-
-      <section>
-        <h2>Ваши задачи</h2>
-        <div class="tasks-container">
-          <!-- Перебираем все устройства -->
-          <div
-            v-for="device in fakeDataBase"
-            :key="device.id"
-            class="device-tasks"
-          >
-            <h3 class="device-title">{{ device.device }}</h3>
-
-            <!-- Если есть задачи, показываем их -->
-            <div
-              v-if="device.tasks && device.tasks.length > 0"
-              class="tasks-list"
-            >
-              <div
-                v-for="task in device.tasks"
-                :key="task.id"
-                class="task-item"
-              >
-                <span class="task-name">{{ task.name }}</span>
-                <button class="task-btn">Выполнить</button>
-              </div>
-            </div>
-
-            <!-- Если задач нет -->
-            <div v-else class="empty-tasks">Нет задач для этого устройства</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Лог ───────────────────────────────────────────── -->
-      <section>
-        <h2>Лог</h2>
-        <div class="log-box">
-          <div v-for="(line, i) in log" :key="i" class="log-line">
-            {{ line }}
-          </div>
-        </div>
-      </section>
+      <Logs />
     </section>
   </div>
 </template>
@@ -136,44 +95,12 @@
 import Navigation from "../components/Navigation.vue";
 import { useAetherLink } from "../composables/useAetherLink";
 import Qrcode from "qrcode.vue";
+import Logs from "../components/Logs.vue";
 import "../assets/style.css";
-
-// Примерно такое должно прийти с запроса
-const fakeDataBase = [
-  {
-    id: 1,
-    device: "Phone 1",
-    tasks: [
-      {
-        id: 1,
-        name: "Ютуб",
-      },
-      {
-        id: 2,
-        name: "Стим",
-      },
-    ],
-  },
-  {
-    id: 2,
-    device: "Phone 2",
-    tasks: [
-      {
-        id: 1,
-        name: "Роблокс",
-      },
-      {
-        id: 2,
-        name: "Аниме",
-      },
-    ],
-  },
-];
 
 const {
   qrData,
   devices,
-  log,
   addPhone,
   jsonCheck,
   generateQR,

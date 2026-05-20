@@ -7,16 +7,41 @@
       <section class="tasks-header-section">
         <div class="tasks-header">
           <h2>
-            Ваши задачи <span class="badge">{{ totalTasksCount }}</span>
+            Ваши задачи <span class="badge">{{ profiles.length }}</span>
           </h2>
           <div class="header-buttons">
-            <button class="sm" @click="">⟳ Обновить</button>
+            <button class="sm" @click="loadProfiles">⟳ Обновить</button>
             <button class="sm primary" @click="openCreateTaskModal">
               + Создать задачу
             </button>
           </div>
         </div>
-        <div class="tasks-container"></div>
+        <div class="tasks-container">
+          <div class="profile" v-for="profile in profiles">
+            <div>
+              <p>{{ profile.name }}</p>
+              <span style="color: rgba(255, 255, 255, 0.4)">{{
+                profile.description
+                  ? profile.description
+                  : "Описание отсутствует"
+              }}</span>
+            </div>
+            <div class="profile-btns">
+              <button
+                class="sm"
+                @click="deleteProfile(profile.id, profile.name)"
+              >
+                Удалить
+              </button>
+              <button
+                class="sm"
+                @click="deleteProfile(profile.id, profile.name)"
+              >
+                Запустить
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ── Модальное окно создания задачи ─────────────────────────────────────── -->
@@ -90,16 +115,7 @@
           </div>
         </div>
       </div>
-
-      <!-- ── Лог ─────────────────────────────────────── -->
-      <section>
-        <h2>Лог</h2>
-        <div class="log-box">
-          <div v-for="(line, i) in log" :key="i" class="log-line">
-            {{ line }}
-          </div>
-        </div>
-      </section>
+      <Logs />
     </section>
   </div>
 </template>
@@ -107,20 +123,22 @@
 <script setup lang="ts">
 import Navigation from "../components/Navigation.vue";
 import { useAetherLink } from "../composables/useAetherLink";
-import { computed, ref } from "vue";
+import Logs from "../components/Logs.vue";
+import { onMounted, ref } from "vue";
 import "../assets/tasks.css";
 
 const {
-  log,
-  addLog,
   loadDevices,
   createProfile,
+  deleteProfile,
+  loadProfiles,
   newProfileName,
   newProfilePath,
   newProfileDescription,
   newProfileType,
   newProfileArgs,
   newProfileScript,
+  profiles,
 } = useAetherLink();
 
 // Модальное окно
@@ -131,42 +149,29 @@ const newTask = ref({
   description: "",
   type: "run_bat",
   path: "",
-  args: "", // Строка из инпута, преобразуем в массив перед отправкой
+  args: "",
   script: "", // Для PowerShell
 });
 
 const handleCreateTask = async () => {
-  // Базовая проверка на имя
   if (!newTask.value.name) return;
 
-  // Динамическая валидация полей в зависимости от типа задачи
-  if (newTask.value.type !== "power_shell" && !newTask.value.path) {
-    addLog("Ошибка: Не указан путь к файлу/директории");
-    return;
-  }
-  if (newTask.value.type === "power_shell" && !newTask.value.script) {
-    addLog("Ошибка: Скрипт не может быть пустым");
-    return;
-  }
-
-  // Заполняем реактивные переменные в useAetherLink
   newProfileName.value = newTask.value.name;
   newProfileDescription.value = newTask.value.description;
   newProfileType.value = newTask.value.type;
   newProfilePath.value = newTask.value.path;
   newProfileScript.value = newTask.value.script;
 
-  // Парсим строку аргументов в массив строк (разбиваем по пробелам, удаляем лишние пустоты)
+  // Парсим строку аргументов в массив строк
   newProfileArgs.value = newTask.value.args.trim()
     ? newTask.value.args.trim().split(/\s+/)
     : [];
 
   try {
     await createProfile();
-    addLog(`Задача создана: ${newTask.value.name}`);
+
     closeModal();
 
-    // Сброс формы в начальное состояние
     newTask.value = {
       name: "",
       description: "",
@@ -175,14 +180,8 @@ const handleCreateTask = async () => {
       args: "",
       script: "",
     };
-  } catch (e) {
-    addLog(`Ошибка при создании: ${e}`);
-  }
+  } catch (e) {}
 };
-
-const totalTasksCount = computed(() => {
-  return 1; // Ваша логика подсчета количества задач
-});
 
 const openCreateTaskModal = () => {
   showModal.value = true;
@@ -192,4 +191,8 @@ const openCreateTaskModal = () => {
 const closeModal = () => {
   showModal.value = false;
 };
+
+onMounted(() => {
+  loadProfiles();
+});
 </script>
