@@ -20,7 +20,7 @@ use tokio::{
 
 use crate::{
     auth::{save_registry, DeviceMode, TrustedDevice},
-    modes::{automation, safe, shell},
+    modes::{automation, profiles, safe, shell},
     protocol::{ClientRequest, ServerResponse},
     state::AppState,
 };
@@ -183,7 +183,7 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
         ClientRequest::Safe { command, params } => safe::execute(command, params),
 
         // ── Default Mode: профили автоматизации ─────────────────────────────────────────
-        ClientRequest::RunProfile { profile_id } => automation::run(&data_dir, &profile_id),
+        ClientRequest::RunProfile { profile_id } => profiles::run_profile(&data_dir, &profile_id),
 
         ClientRequest::ListProfiles => match automation::load(&data_dir) {
             Ok(profiles) => {

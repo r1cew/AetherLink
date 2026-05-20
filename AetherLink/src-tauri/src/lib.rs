@@ -32,12 +32,12 @@ mod protocol;
 mod server;
 mod state;
 
+use crate::modes::profiles;
 use auth::{
     load_or_create_server_keys, load_registry, new_pairing_token, save_registry, DeviceMode,
 };
 use modes::automation::{self, Profile, ProfileKind};
 use state::{AppState, AppStateInner, PairingSession};
-
 // ─── Вспомогательная: IP локальной машины ────────────────────────────────────
 
 fn local_ip() -> String {
@@ -272,6 +272,21 @@ async fn get_logs(state: tauri::State<'_, LogState>) -> Result<Vec<String>, Stri
     Ok(logs.iter().cloned().collect())
 }
 
+// ─── Тестирование профилей ────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn run_profile_local(
+    profile_id: String,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let data_dir = state.lock().await.data_dir.clone();
+
+    let response = profiles::run_profile(&data_dir, &profile_id);
+
+    println!("{:?}", response);
+    Ok(())
+}
+
 // ─── Точка входа приложения ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -320,6 +335,9 @@ pub fn run() {
             get_profiles,
             create_profile,
             delete_profile,
+            add_log,
+            get_logs,
+            run_profile_local,
         ])
         .run(tauri::generate_context!())
         .expect("Ошибка запуска Tauri");
