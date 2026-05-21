@@ -30,3 +30,19 @@ pub fn remove_from_startup() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+pub fn status_startup() -> Result<bool, Box<dyn std::error::Error>> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+
+    let key = hkcu.open_subkey_with_flags(path, KEY_READ)?;
+    match key.get_value::<String, _>("AetherLink") {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
+
+fn main() {
+    let e = status_startup();
+    println!("{:?}", e)
+}

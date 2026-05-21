@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "aetherlink",
-        "width": 1080,
-        "height": 780,
+        "title": "AetherlLink",
+        "width": 1245,
+        "height": 835,
         "minWidth": 600,
         "minHeight": 500
       }
