@@ -87,17 +87,27 @@
         </div>
       </section>
       <section class="startup">
-        <h2>Автозапуск <span class="badge">Выкл</span></h2>
+        <h2>
+          Автозапуск
+          <span class="badge">{{ startupResult ? "Вкл" : "Выкл" }}</span>
+        </h2>
         <div class="toggle-container">
           <input
             type="checkbox"
-            @change="addToStartup"
+            :checked="startupResult"
+            @change="startupResult ? removeFromStartup() : addToStartup()"
             id="toggleSwitch"
             class="toggle-input"
           />
-          Тестовая кнопка выключения(пока отсутствует отслеживание)
-          <button @click="removeFromStartup">выкл</button>
           <label for="toggleSwitch" class="toggle-slider"></label>
+        </div>
+        <div class="info-block">
+          <p class="hint" v-if="!startupResult">
+            Рекомендуется включить для быстрого доступа
+          </p>
+          <p class="hint success" v-else>
+            <span class="icon">✓</span> Приложение запускается автоматически
+          </p>
         </div>
       </section>
       <Logs />
@@ -118,6 +128,7 @@ const {
   devices,
   addPhone,
   jsonCheck,
+  startupResult,
   generateQR,
   timeLeft,
   formatTime,
@@ -127,9 +138,11 @@ const {
   setMode,
   removeDevice,
   showJson,
+  checkStartup,
 } = useAetherLink();
 
 onMounted(() => {
   loadDevices();
+  checkStartup();
 });
 </script>

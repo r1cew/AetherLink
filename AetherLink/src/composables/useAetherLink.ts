@@ -76,6 +76,8 @@ export function useAetherLink() {
     newProfileType: profileManager.newProfileType,
     newProfileArgs: profileManager.newProfileArgs,
     newProfileScript: profileManager.newProfileScript,
+    startupResult: startup.startupResult,
+    checkStartup: startup.checkStartup,
     loadProfiles: profileManager.loadProfiles,
     runProfile: profileManager.runProfile,
     createProfile: profileManager.createProfile,
