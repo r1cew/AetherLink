@@ -53,10 +53,10 @@ export function useAetherLink() {
     }
   }
 
-  async function runProfile(id: string) {
+  async function runProfile(id: string, name: string) {
     try {
       await invoke("run_profile_local", { profileId: id });
-      add_log(`Профиль "${id}" запущен`);
+      add_log(`Профиль "${name}" запущен`);
     } catch (e) {
       add_log(`Ошибка: ${e}`);
     }
@@ -83,7 +83,6 @@ export function useAetherLink() {
         timeLeft.value--;
       } else {
         stopTimer();
-        generateQR();
       }
     }, 1000);
   };
@@ -92,6 +91,7 @@ export function useAetherLink() {
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
+      qrData.value = "";
     }
     timerActive.value = false;
   };

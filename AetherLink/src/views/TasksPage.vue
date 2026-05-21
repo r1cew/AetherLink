@@ -33,7 +33,7 @@
               >
                 Удалить
               </button>
-              <button class="sm" @click="runProfile(profile.id)">
+              <button class="sm" @click="runProfile(profile.id, profile.name)">
                 Запустить
               </button>
             </div>
