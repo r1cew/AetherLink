@@ -29,3 +29,6 @@ tokio          = { version = "1", features = ["full"] }
 uuid           = { version = "1", features = ["v4"] }
 base64         = "0.22"
 rand           = "0.8"
+
+# startup
+winreg         = "0.56.0"
