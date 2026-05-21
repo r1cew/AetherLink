@@ -240,6 +240,11 @@ async fn remove_from_startup() -> Result<(), String> {
     startup::remove_from_startup().map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn status_startup() -> Result<bool, String> {
+    startup::status_startup().map_err(|e| e.to_string())
+}
+
 // ─── Точка входа приложения ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -293,6 +298,7 @@ pub fn run() {
             run_profile_local,
             add_to_startup,
             remove_from_startup,
+            status_startup,
         ])
         .run(tauri::generate_context!())
         .expect("Ошибка запуска Tauri");

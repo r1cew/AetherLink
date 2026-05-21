@@ -2,7 +2,7 @@
 name = "aetherlink"
 version = "0.1.0"
 description = "AetherLink - Remote PC Control"
-authors = ["you"]
+authors = ["Backend: https://github.com/r1cew", "UI: https://github.com/XtadeRe"]
 edition = "2021"
 
 [lib]
