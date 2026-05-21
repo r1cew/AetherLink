@@ -97,6 +97,7 @@ import { useAetherLink } from "../composables/useAetherLink";
 import Qrcode from "qrcode.vue";
 import Logs from "../components/Logs.vue";
 import "../assets/style.css";
+import { onMounted } from "vue";
 
 const {
   qrData,
@@ -111,4 +112,8 @@ const {
   removeDevice,
   showJson,
 } = useAetherLink();
+
+onMounted(() => {
+  loadDevices();
+});
 </script>
