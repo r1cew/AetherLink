@@ -15,7 +15,7 @@ import { onMounted } from "vue";
 import { useAetherLink } from "../composables/useAetherLink";
 import "../assets/style.css";
 
-const { logData, get_logs, add_log } = useAetherLink();
+const { logData, get_logs } = useAetherLink();
 
 onMounted(async () => {
   await get_logs();

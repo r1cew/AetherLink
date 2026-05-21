@@ -293,6 +293,56 @@ button.active {
   border-radius: 10px;
 }
 
+.startup {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Контейнер (опционально, для центровки) */
+.toggle-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Скрываем стандартный чекбокс */
+.toggle-input {
+  display: none;
+}
+
+/* Оболочка ползунка (дорожка) */
+.toggle-slider {
+  position: relative;
+  width: 52px;
+  height: 26px;
+  background-color: #820000;
+  border-radius: 34px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Сам круглый переключатель */
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+/* Изменение цвета дорожки при включении */
+.toggle-input:checked + .toggle-slider {
+  background-color: #d8323c;
+}
+
+/* Смещение кружка при включении */
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(26px);
+}
+
 button.primary {
   background: rgba(216, 50, 60, 0.25);
   border-color: rgba(216, 50, 60, 0.5);

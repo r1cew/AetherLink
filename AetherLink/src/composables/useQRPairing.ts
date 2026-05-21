@@ -1,4 +1,3 @@
-// composables/useQRPairing.ts
 import { ref, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import type { UseLoggerReturn } from "./useLogger";

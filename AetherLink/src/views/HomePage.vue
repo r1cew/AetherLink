@@ -86,6 +86,20 @@
           </div>
         </div>
       </section>
+      <section class="startup">
+        <h2>Автозапуск <span class="badge">Выкл</span></h2>
+        <div class="toggle-container">
+          <input
+            type="checkbox"
+            @change="addToStartup"
+            id="toggleSwitch"
+            class="toggle-input"
+          />
+          Тестовая кнопка выключения(пока отсутствует отслеживание)
+          <button @click="removeFromStartup">выкл</button>
+          <label for="toggleSwitch" class="toggle-slider"></label>
+        </div>
+      </section>
       <Logs />
     </section>
   </div>
@@ -107,6 +121,8 @@ const {
   generateQR,
   timeLeft,
   formatTime,
+  addToStartup,
+  removeFromStartup,
   loadDevices,
   setMode,
   removeDevice,

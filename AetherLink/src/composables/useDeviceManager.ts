@@ -1,4 +1,3 @@
-// composables/useDeviceManager.ts
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import type { UseLoggerReturn } from "./useLogger";

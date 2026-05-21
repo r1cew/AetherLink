@@ -4,6 +4,7 @@ import { useLogger } from "./useLogger";
 import { useDeviceManager } from "./useDeviceManager";
 import { useProfileManager } from "./useProfileManager";
 import { useQRPairing } from "./useQRPairing";
+import { useStartUp } from "./useStartUp";
 
 let initialized = false;
 
@@ -18,6 +19,7 @@ export function useAetherLink() {
   const deviceManager = useDeviceManager(logger);
   const profileManager = useProfileManager(logger);
   const qrPairing = useQRPairing(logger);
+  const startup = useStartUp(logger);
 
   // Обертка для toggleDevMode с сохранением состояния
   async function toggleDevMode() {
@@ -88,5 +90,9 @@ export function useAetherLink() {
     // Утилиты
     toggleDevMode,
     showJson,
+
+    // Автозапуск
+    addToStartup: startup.addToStartup,
+    removeFromStartup: startup.removeFromStartup,
   };
 }

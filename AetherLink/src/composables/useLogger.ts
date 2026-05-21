@@ -2,9 +2,9 @@
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 
-export function useLogger() {
-  const logData = ref<string[]>([]);
+const logData = ref<string[]>([]);
 
+export function useLogger() {
   async function getLogs() {
     try {
       logData.value = await invoke("get_logs");
