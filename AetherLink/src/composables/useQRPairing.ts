@@ -16,7 +16,6 @@ export function useQRPairing(logger: UseLoggerReturn) {
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
-      qrData.value = "";
     }
     timerActive.value = false;
   };
@@ -50,12 +49,6 @@ export function useQRPairing(logger: UseLoggerReturn) {
     }
   }
 
-  function resetQR() {
-    stopTimer();
-    qrData.value = "";
-    timeLeft.value = 120;
-  }
-
   onUnmounted(() => {
     stopTimer();
   });
@@ -66,7 +59,6 @@ export function useQRPairing(logger: UseLoggerReturn) {
     timerActive,
     formatTime,
     generateQR,
-    resetQR,
   };
 }
 
