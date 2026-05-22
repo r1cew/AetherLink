@@ -4,8 +4,13 @@
 /// Телефон может только запускать профиль по ID — никакого произвольного кода.
 ///
 /// Пример запроса от телефона:
-///   { "action": "run_profile", "profile_id": "start_mc_server" }
+///    { "action": "run_profile", "profile_id": "start_mc_server" }
 use std::{fs, path::PathBuf, process::Command};
+
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -83,26 +88,37 @@ pub fn run(data_dir: &PathBuf, profile_id: &str) -> ServerResponse {
 fn execute(profile: &Profile) -> Result<String, String> {
     match &profile.kind {
         ProfileKind::RunBat { path } => {
-            Command::new("cmd")
-                .args(["/c", path])
-                .spawn()
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/c", path]);
+
+            #[cfg(windows)]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.spawn()
                 .map_err(|e| format!("Ошибка запуска bat: {e}"))?;
             Ok(format!("Запущено: {}", profile.name))
         }
 
         ProfileKind::RunExe { path, args } => {
-            Command::new(path)
-                .args(args)
-                .spawn()
+            let mut cmd = Command::new(path);
+            cmd.args(args);
+
+            #[cfg(windows)]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.spawn()
                 .map_err(|e| format!("Ошибка запуска exe: {e}"))?;
             Ok(format!("Запущено: {}", profile.name))
         }
 
         ProfileKind::PowerShell { script } => {
-            Command::new("powershell")
-                .args(["-NoProfile", "-NonInteractive", "-Command", script])
-                .spawn()
-                .map_err(|e| format!("Ошибка PowerShell: {e}"))?;
+            let mut cmd = Command::new("powershell");
+            cmd.args(["-NoProfile", "-NonInteractive", "-Command", script]);
+
+            #[cfg(windows)]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.spawn().map_err(|e| format!("Ошибка PowerShell: {e}"))?;
             Ok(format!("Выполнено: {}", profile.name))
         }
     }

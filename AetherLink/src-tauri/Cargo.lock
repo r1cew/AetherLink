@@ -3,6 +3,24 @@
 version = 4
 
 [[package]]
+name = "AetherLink"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "rand",
+ "serde",
+ "serde_json",
+ "sha2",
+ "snow",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tokio",
+ "uuid",
+ "winreg 0.56.0",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -41,24 +59,6 @@ dependencies = [
  "ctr",
  "ghash",
  "subtle",
-]
-
-[[package]]
-name = "aetherlink"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "rand",
- "serde",
- "serde_json",
- "sha2",
- "snow",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tokio",
- "uuid",
- "winreg 0.56.0",
 ]
 
 [[package]]

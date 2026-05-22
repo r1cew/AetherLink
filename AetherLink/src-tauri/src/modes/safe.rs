@@ -6,6 +6,7 @@ use std::process::Command;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
+#[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 use serde_json::Value;
@@ -41,27 +42,35 @@ pub fn execute(command: SafeCommand, params: Value) -> ServerResponse {
 // ─── Питание ──────────────────────────────────────────────────────────────────
 
 fn shutdown() -> Result<String, String> {
-    Command::new("shutdown")
-        .args(["/s", "/t", "5"])
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new("shutdown");
+    cmd.args(["/s", "/t", "5"]);
+
+    #[cfg(windows)]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    cmd.spawn().map_err(|e| e.to_string())?;
     Ok("Выключение через 5 секунд".into())
 }
 
 fn sleep() -> Result<String, String> {
-    // rundll32 powrprof.dll,SetSuspendState — самый надёжный способ на Windows
-    Command::new("rundll32.exe")
-        .args(["powrprof.dll,SetSuspendState", "0,1,0"])
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new("rundll32.exe");
+    cmd.args(["powrprof.dll,SetSuspendState", "0,1,0"]);
+
+    #[cfg(windows)]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    cmd.spawn().map_err(|e| e.to_string())?;
     Ok("Сон".into())
 }
 
 fn lock() -> Result<String, String> {
-    Command::new("rundll32.exe")
-        .args(["user32.dll,LockWorkStation"])
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new("rundll32.exe");
+    cmd.args(["user32.dll,LockWorkStation"]);
+
+    #[cfg(windows)]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    cmd.spawn().map_err(|e| e.to_string())?;
     Ok("Экран заблокирован".into())
 }
 

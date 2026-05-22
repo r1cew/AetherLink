@@ -5,6 +5,11 @@
 /// Команда выполняется синхронно, stdout+stderr возвращаются в ответе.
 use std::process::Command;
 
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 use crate::protocol::{ServerResponse, ShellType};
 
 pub fn execute(cmd: String, shell: ShellType) -> ServerResponse {
@@ -20,20 +25,24 @@ pub fn execute(cmd: String, shell: ShellType) -> ServerResponse {
 }
 
 fn run_powershell(cmd: &str) -> Result<String, String> {
-    let out = Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", cmd])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut command = Command::new("powershell");
+    command.args(["-NoProfile", "-NonInteractive", "-Command", cmd]);
 
+    #[cfg(windows)]
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let out = command.output().map_err(|e| e.to_string())?;
     merge_output(out)
 }
 
 fn run_cmd(cmd: &str) -> Result<String, String> {
-    let out = Command::new("cmd")
-        .args(["/c", cmd])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut command = Command::new("cmd");
+    command.args(["/c", cmd]);
 
+    #[cfg(windows)]
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let out = command.output().map_err(|e| e.to_string())?;
     merge_output(out)
 }
 
