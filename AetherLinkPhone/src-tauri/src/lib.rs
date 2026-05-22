@@ -315,8 +315,12 @@ async fn discover_and_update(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_barcode_scanner::init())
+    let builder = tauri::Builder::default();
+
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
+
+    builder
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let data_dir = app
