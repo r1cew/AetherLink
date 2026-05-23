@@ -23,6 +23,7 @@ src-tauri/gen/android/.gradle
 src-tauri/gen/android/build
 src-tauri/gen/android/app/build
 src-tauri/gen/android/app/src/main/jniLibs
+src-tauri/gen/android/app/build.grandle.kts
 src-tauri/gen/android/local.properties
 src-tauri/gen/android/key.properties
 src-tauri/gen/android/tauri.settings.gradle
