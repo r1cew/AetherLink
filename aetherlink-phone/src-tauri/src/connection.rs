@@ -23,8 +23,9 @@ impl ActiveSession {
     pub fn new(server: &SavedServer, keypair: &PhoneKeypair) -> Result<Self, String> {
         let addr = format!("{}:{}", server.ip, server.port);
 
-        let mut stream =
-            TcpStream::connect(&addr).map_err(|e| format!("Нет соединения с {addr}: {e}"))?;
+        let socket_addr: SocketAddr = addr.parse().map_err(|e| format!("Неверный адрес: {e}"))?;
+        let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(4))
+            .map_err(|e| format!("Превышен таймаут подключения к {addr}: {e}"))?;
 
         // КРИТИЧНО ДЛЯ ПИНГА: Отправляем пакеты мгновенно, не ждем буферизации ОС
         stream.set_nodelay(true).map_err(|e| e.to_string())?;
