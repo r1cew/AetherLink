@@ -22,15 +22,14 @@ use tauri::Manager;
 use tokio::sync::Mutex;
 
 mod auth;
-mod beacon;
 mod modes;
-mod protocol;
 mod server;
 mod startup;
 mod state;
 mod tray;
 
 use crate::modes::profiles;
+use aetherlink_common::beacon;
 use auth::{
     load_or_create_server_keys, load_registry, new_pairing_token, save_registry, DeviceMode,
 };
@@ -250,7 +249,7 @@ async fn status_startup() -> Result<bool, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {}))
+        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}))
         .manage(LogState {
             logs: std::sync::Mutex::new(VecDeque::new()),
         })
@@ -279,7 +278,7 @@ pub fn run() {
 
             // ── Сетевые службы ────────────────────────────────────────────────
             tauri::async_runtime::spawn(server::run(state.clone()));
-            tauri::async_runtime::spawn(beacon::run());
+            tauri::async_runtime::spawn(beacon::run_server_beacon());
 
             // ── Трей ──────────────────────────────────────────────────────────
             tray::setup_tray(app)?;

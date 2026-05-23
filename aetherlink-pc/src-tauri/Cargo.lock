@@ -47,6 +47,7 @@ dependencies = [
 name = "aetherlink"
 version = "0.1.0"
 dependencies = [
+ "aetherlink-common",
  "base64 0.22.1",
  "rand",
  "serde",
@@ -60,6 +61,18 @@ dependencies = [
  "tokio",
  "uuid",
  "winreg 0.56.0",
+]
+
+[[package]]
+name = "aetherlink-common"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "rand",
+ "serde",
+ "serde_json",
+ "snow",
+ "tokio",
 ]
 
 [[package]]

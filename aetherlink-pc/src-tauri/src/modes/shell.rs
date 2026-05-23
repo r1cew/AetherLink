@@ -10,7 +10,7 @@ use std::os::windows::process::CommandExt;
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-use crate::protocol::{ServerResponse, ShellType};
+use aetherlink_common::protocol::{ServerResponse, ShellType};
 
 pub fn execute(cmd: String, shell: ShellType) -> ServerResponse {
     let result = match shell {

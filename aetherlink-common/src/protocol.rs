@@ -1,16 +1,12 @@
-/// Все сообщения между телефоном (клиент) и ПК (сервер).
-///
-/// Телефон шлёт ClientRequest, ПК отвечает ServerResponse.
-/// Всё завёрнуто в Noise-шифрование, так что JSON ходит в зашифрованном виде.
 use serde::{Deserialize, Serialize};
 
 // ─── Запросы от телефона ──────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+// Добавляем и Serialize, и Deserialize, и Clone, чтобы обе стороны могли работать с enum
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum ClientRequest {
     /// Первичная привязка устройства.
-    /// Телефон присылает one-time token из QR и своё имя.
     Pair { token: String, name: String },
 
     /// Safe Mode — готовые системные команды.
@@ -36,7 +32,7 @@ pub enum ClientRequest {
 
 // ─── Safe Mode команды ────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SafeCommand {
     Shutdown,
@@ -53,7 +49,7 @@ pub enum SafeCommand {
 
 // ─── Shell type ───────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ShellType {
     Cmd,
@@ -61,24 +57,28 @@ pub enum ShellType {
 }
 
 impl ShellType {
-    fn default() -> Self {
+    // Дефолт нужен для Serde, оставляем его публичным
+    pub fn default() -> Self {
         ShellType::Powershell
     }
 }
 
 // ─── Ответ от сервера ─────────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize)]
+// Объединяем: даем и Serialize (для ПК), и Deserialize (для телефона)
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServerResponse {
     pub ok: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // skip_serializing_if экономит трафик в сети, оставляя JSON чистым
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub output: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub error: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub data: Option<serde_json::Value>,
 }
 
+// Конструкторы ответов (теперь доступны и на ПК для отправки, и на мобилке для тестов)
 impl ServerResponse {
     pub fn ok() -> Self {
         Self {

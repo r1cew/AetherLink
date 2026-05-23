@@ -15,7 +15,7 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::protocol::ServerResponse;
+use aetherlink_common::protocol::ServerResponse;
 
 // ─── Типы профилей ────────────────────────────────────────────────────────────
 

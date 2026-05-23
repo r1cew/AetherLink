@@ -41,8 +41,3 @@ pub fn status_startup() -> Result<bool, Box<dyn std::error::Error>> {
         Err(_) => Ok(false),
     }
 }
-
-fn main() {
-    let e = status_startup();
-    println!("{:?}", e)
-}

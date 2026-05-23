@@ -11,7 +11,7 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 use serde_json::Value;
 
-use crate::protocol::{SafeCommand, ServerResponse};
+use aetherlink_common::protocol::{SafeCommand, ServerResponse};
 
 pub fn execute(command: SafeCommand, params: Value) -> ServerResponse {
     let result = match command {

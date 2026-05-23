@@ -21,9 +21,9 @@ use tokio::{
 use crate::{
     auth::{save_registry, DeviceMode, TrustedDevice},
     modes::{automation, profiles, safe, shell},
-    protocol::{ClientRequest, ServerResponse},
     state::AppState,
 };
+use aetherlink_common::protocol::{ClientRequest, ServerResponse};
 
 pub const PORT: u16 = 8080;
 

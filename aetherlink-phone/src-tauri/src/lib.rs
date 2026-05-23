@@ -18,14 +18,13 @@ use tauri::Manager;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-mod beacon;
+use aetherlink_common::beacon;
 mod connection;
 mod keypair;
-mod protocol;
 mod servers;
 
+use aetherlink_common::protocol::{ClientRequest, SafeCommand, ShellType};
 use keypair::PhoneKeypair;
-use protocol::{ClientRequest, SafeCommand, ShellType};
 use servers::{load as load_servers, save as save_servers, SavedServer};
 
 // ─── Состояние приложения ─────────────────────────────────────────────────────
@@ -83,7 +82,7 @@ async fn send_with_fallback(
     }
 
     // Fallback: beacon discovery
-    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover(15))
+    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover_client(15))
         .await
         .map_err(|e| e.to_string())??;
 
@@ -105,7 +104,9 @@ async fn send_with_fallback(
     response_to_value(resp)
 }
 
-fn response_to_value(resp: protocol::ServerResponse) -> Result<serde_json::Value, String> {
+fn response_to_value(
+    resp: aetherlink_common::protocol::ServerResponse,
+) -> Result<serde_json::Value, String> {
     if resp.ok {
         Ok(resp
             .data
@@ -295,7 +296,7 @@ async fn discover_and_update(
 ) -> Result<String, String> {
     let data_dir = state.inner().lock().await.data_dir.clone();
 
-    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover(20))
+    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover_client(20))
         .await
         .map_err(|e| e.to_string())??;
 

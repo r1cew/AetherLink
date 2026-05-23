@@ -39,3 +39,5 @@ winreg         = "0.56.0"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"
+
+aetherlink-common = { path = "../../aetherlink-common" }

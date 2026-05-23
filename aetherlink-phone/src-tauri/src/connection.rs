@@ -14,14 +14,11 @@ use std::{
     time::Duration,
 };
 
+use aetherlink_common::protocol::{ClientRequest, ServerResponse};
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 use snow::{params::NoiseParams, Builder, TransportState};
 
-use crate::{
-    keypair::PhoneKeypair,
-    protocol::{ClientRequest, ServerResponse},
-    servers::SavedServer,
-};
+use crate::{keypair::PhoneKeypair, servers::SavedServer};
 
 /// Подключиться к серверу, отправить запрос, вернуть ответ.
 pub fn send(
