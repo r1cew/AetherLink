@@ -79,34 +79,33 @@ async fn handle(mut stream: TcpStream, state: AppState) -> Result<(), String> {
         .build_responder()
         .map_err(|e: snow::Error| e.to_string())?;
 
-    // ── Noise XX хендшейк (3 сообщения) ──────────────────────────────────────
-    //
-    //  Инициатор (телефон) → Респондер (ПК):
-    //    msg1:  e                   (телефон шлёт ephemeral key)
-    //    msg2:  e, ee, s, es        (ПК шлёт ephemeral + static keys, DH)
-    //    msg3:  s, se               (телефон шлёт static key, DH)
-    //
-    //  После msg3 оба знают static keys друг друга → transport mode.
-
-    let mut buf = vec![0u8; 65535];
-    let mut tmp = vec![0u8; 65535];
+    // Буферы увеличены на 4 байта для префикса длины, чтобы собирать пакет на месте
+    let mut buf = vec![0u8; 65540];
+    let mut tmp = vec![0u8; 65540];
 
     // msg1: recv ← телефон
-    let msg1 = recv_frame(&mut stream).await?;
+    let msg1_len = recv_frame_inplace(&mut stream, &mut buf).await?;
     handshake
-        .read_message(&msg1, &mut tmp)
+        .read_message(&buf[..msg1_len], &mut tmp)
         .map_err(|e| format!("handshake msg1: {e}"))?;
 
-    // msg2: send → телефон
+    // msg2: send → телефон (смещаемся на 4 байта, оставляя место под длину фрейма)
     let len = handshake
-        .write_message(&[], &mut buf)
+        .write_message(&[], &mut buf[4..])
         .map_err(|e| format!("handshake msg2: {e}"))?;
-    send_frame(&mut stream, &buf[..len]).await?;
+
+    let len_bytes = (len as u32).to_be_bytes();
+    buf[..4].copy_from_slice(&len_bytes);
+    stream
+        .write_all(&buf[..4 + len])
+        .await
+        .map_err(|e| e.to_string())?;
+    stream.flush().await.map_err(|e| e.to_string())?;
 
     // msg3: recv ← телефон
-    let msg3 = recv_frame(&mut stream).await?;
+    let msg3_len = recv_frame_inplace(&mut stream, &mut buf).await?;
     handshake
-        .read_message(&msg3, &mut tmp)
+        .read_message(&buf[..msg3_len], &mut tmp)
         .map_err(|e| format!("handshake msg3: {e}"))?;
 
     // Получаем remote static public key телефона (стал известен после msg3).
@@ -119,31 +118,49 @@ async fn handle(mut stream: TcpStream, state: AppState) -> Result<(), String> {
 
     println!("[server] Хендшейк завершён");
 
-    // ── Основной цикл сообщений ───────────────────────────────────────────────
+    // ── Основной цикл сообщений (ТЕПЕРЬ 100% БЕЗ АЛЛОКАЦИЙ) ───────────────────
 
     loop {
-        let encrypted = match recv_frame(&mut stream).await {
-            Ok(d) => d,
+        // Читаем зашифрованный фрейм прямо в buf
+        let enc_len = match recv_frame_inplace(&mut stream, &mut buf).await {
+            Ok(l) => l,
             Err(_) => break, // клиент отключился
         };
 
-        // Расшифровываем
+        // Расшифровываем из buf в tmp
         let plain_len = transport
-            .read_message(&encrypted, &mut buf)
+            .read_message(&buf[..enc_len], &mut tmp)
             .map_err(|e| format!("decrypt: {e}"))?;
 
+        // Десериализуем из слайса памяти
         let request: ClientRequest =
-            serde_json::from_slice(&buf[..plain_len]).map_err(|e| format!("json parse: {e}"))?;
+            serde_json::from_slice(&tmp[..plain_len]).map_err(|e| format!("json parse: {e}"))?;
 
         // Обрабатываем запрос
         let response = dispatch(request, &remote_pubkey, &state).await;
 
-        // Шифруем и отправляем ответ
-        let resp_json = serde_json::to_vec(&response).map_err(|e| e.to_string())?;
-        let enc_len = transport
-            .write_message(&resp_json, &mut buf)
+        // Сериализуем ответ прямо в буфер tmp с помощью Cursor, избегая выделения Vec
+        let mut writer = std::io::Cursor::new(&mut tmp[..]);
+        serde_json::to_writer(&mut writer, &response).map_err(|e| e.to_string())?;
+        let plain_resp_len = writer.position() as usize;
+
+        // Шифруем ответ из tmp в buf, со смещением в 4 байта
+        let enc_resp_len = transport
+            .write_message(&tmp[..plain_resp_len], &mut buf[4..])
             .map_err(|e| format!("encrypt: {e}"))?;
-        send_frame(&mut stream, &buf[..enc_len]).await?;
+
+        // Пишем 4 байта длины в самое начало буфера buf
+        let resp_len_bytes = (enc_resp_len as u32).to_be_bytes();
+        buf[..4].copy_from_slice(&resp_len_bytes);
+
+        // Отправляем длину и зашифрованные данные ОДНИМ системным вызовом
+        stream
+            .write_all(&buf[..4 + enc_resp_len])
+            .await
+            .map_err(|e| format!("send: {e}"))?;
+
+        // Принудительно выталкиваем пакет в сеть, минимизируя пинг
+        stream.flush().await.map_err(|e| e.to_string())?;
     }
 
     Ok(())
@@ -157,10 +174,8 @@ async fn dispatch(
     state: &AppState,
 ) -> ServerResponse {
     match request {
-        // Паринг обрабатывается всегда — независимо от того, есть ли устройство в реестре.
         ClientRequest::Pair { token, name } => pair(state, remote_pubkey, &token, &name).await,
 
-        // Все остальные запросы — только для доверенных устройств.
         other => {
             let device = {
                 let s = state.lock().await;
@@ -179,10 +194,8 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
     let data_dir = state.lock().await.data_dir.clone();
 
     match request {
-        // ── Default Mode: системные команды ───────────────────────────────────────────────
         ClientRequest::Safe { command, params } => safe::execute(command, params),
 
-        // ── Default Mode: профили автоматизации ─────────────────────────────────────────
         ClientRequest::RunProfile { profile_id } => profiles::run_profile(&data_dir, &profile_id),
 
         ClientRequest::ListProfiles => match automation::load(&data_dir) {
@@ -192,7 +205,6 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
             Err(e) => ServerResponse::err(e),
         },
 
-        // ── Developer Mode ─────────────────────────────────────────────────────
         ClientRequest::Shell { cmd, shell } => {
             if device.mode != DeviceMode::Developer {
                 return ServerResponse::err("Для Shell нужен режим Developer.");
@@ -200,7 +212,6 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
             shell::execute(cmd, shell)
         }
 
-        // Паринг уже обработан выше — сюда не дойдёт.
         ClientRequest::Pair { .. } => ServerResponse::err("Устройство уже привязано."),
     }
 }
@@ -210,7 +221,6 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
 async fn pair(state: &AppState, remote_pubkey: &[u8], token: &str, name: &str) -> ServerResponse {
     let mut s = state.lock().await;
 
-    // Проверяем одноразовый токен
     let valid = s
         .pairing
         .as_ref()
@@ -221,24 +231,19 @@ async fn pair(state: &AppState, remote_pubkey: &[u8], token: &str, name: &str) -
         return ServerResponse::err("Токен паринга недействителен или истёк.");
     }
 
-    // Проверяем, не привязано ли уже это устройство
     if s.registry.find_by_pubkey(remote_pubkey).is_some() {
         return ServerResponse::err("Устройство уже привязано.");
     }
 
-    // Добавляем в реестр
     let device = s.registry.add(name.to_string(), remote_pubkey);
     let device_id = device.id.clone();
 
-    // Сохраняем реестр на диск
     if let Err(e) = save_registry(&s.data_dir, &s.registry) {
-        return ServerResponse::err(format!("Ошибка сохранения реестра: {e}"));
+        return ServerResponse::err(format!("Ошибка保存 реестра: {e}"));
     }
 
-    // Токен использован — стираем (one-time use!)
     s.pairing = None;
 
-    // Уведомляем фронтенд Tauri — UI может обновить список устройств
     let _ = s.app.emit(
         "device-paired",
         serde_json::json!({
@@ -257,10 +262,9 @@ async fn pair(state: &AppState, remote_pubkey: &[u8], token: &str, name: &str) -
     }))
 }
 
-// ─── Фреймирование ────────────────────────────────────────────────────────────
-// Каждое сообщение: [u32 BE: длина][данные]
+// ─── Оптимизированное Фреймирование (Inplace) ─────────────────────────────────
 
-async fn recv_frame(stream: &mut TcpStream) -> Result<Vec<u8>, String> {
+async fn recv_frame_inplace(stream: &mut TcpStream, out_buf: &mut [u8]) -> Result<usize, String> {
     let mut len_buf = [0u8; 4];
     stream
         .read_exact(&mut len_buf)
@@ -268,22 +272,15 @@ async fn recv_frame(stream: &mut TcpStream) -> Result<Vec<u8>, String> {
         .map_err(|e| e.to_string())?;
 
     let len = u32::from_be_bytes(len_buf) as usize;
-    if len > 65_000 {
+    if len > 65535 {
         return Err(format!("Слишком большой фрейм: {len} байт"));
     }
 
-    let mut data = vec![0u8; len];
+    // Читаем данные прямо в переданный буфер без аллокаций вектора
     stream
-        .read_exact(&mut data)
+        .read_exact(&mut out_buf[..len])
         .await
         .map_err(|e| e.to_string())?;
 
-    Ok(data)
-}
-
-async fn send_frame(stream: &mut TcpStream, data: &[u8]) -> Result<(), String> {
-    let len = (data.len() as u32).to_be_bytes();
-    stream.write_all(&len).await.map_err(|e| e.to_string())?;
-    stream.write_all(data).await.map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(len)
 }

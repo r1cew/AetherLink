@@ -1,7 +1,7 @@
 /// AetherLink Phone — Tauri-команды для Android UI.
 ///
 /// ┌─────────────────────────────┬─────────────────────────────────────────────┐
-/// │ Команда                     │ Назначение                                  │
+/// │ Команда                      │ Назначение                                  │
 /// ├─────────────────────────────┼─────────────────────────────────────────────┤
 /// │ pair_with_qr(qr, name)      │ Привязать ПК по QR-коду                     │
 /// │ get_servers()               │ Список привязанных ПК                       │
@@ -32,6 +32,8 @@ use servers::{load as load_servers, save as save_servers, SavedServer};
 struct AppStateInner {
     data_dir: PathBuf,
     keypair: PhoneKeypair,
+    /// Хранилище активного долгоживущего соединения: (server_id, сессия сокета)
+    session: Arc<std::sync::Mutex<Option<(String, connection::ActiveSession)>>>,
 }
 type AppState = Arc<Mutex<AppStateInner>>;
 
@@ -45,17 +47,83 @@ struct QrData {
     pairing_token: String,
 }
 
-// ─── Вспомогательная: отправить запрос с fallback на beacon ──────────────────
+// ─── Вспомогательная: отправить запрос через постоянную сессию ────────────────
 
 async fn send_with_fallback(
     state: &AppState,
     server_id: &str,
     request: ClientRequest,
 ) -> Result<serde_json::Value, String> {
-    let (data_dir, keypair) = {
+    let (data_dir, keypair, session_arc) = {
         let s = state.lock().await;
-        (s.data_dir.clone(), s.keypair.clone())
+        (s.data_dir.clone(), s.keypair.clone(), s.session.clone())
     };
+
+    // Сериализуем запрос в строку, чтобы безопасно передать через границу потоков spawn_blocking
+    let req_json = serde_json::to_string(&request).unwrap();
+
+    // Попытка 1: Отправляем через живую сессию (или создаем её, если пустая)
+    let result = tauri::async_runtime::spawn_blocking({
+        let server_id = server_id.to_string();
+        let data_dir = data_dir.clone();
+        let keypair = keypair.clone();
+        let req_json = req_json.clone();
+        let session_arc = session_arc.clone();
+
+        move || {
+            let mut lock = session_arc.lock().unwrap();
+
+            // Если сессия открыта для ДРУГОГО сервера, сбрасываем её
+            let is_matching = match &*lock {
+                Some((id, _)) => id == &server_id,
+                None => false,
+            };
+            if !is_matching {
+                *lock = None;
+            }
+
+            // Если сокет еще не создан — подключаемся и делаем хендшейк (ОДИН РАЗ)
+            if lock.is_none() {
+                let servers = load_servers(&data_dir)?;
+                let server = servers
+                    .iter()
+                    .find(|s| s.id == server_id)
+                    .ok_or_else(|| format!("Сервер {server_id} не найден"))?;
+
+                let new_sess = connection::ActiveSession::new(server, &keypair)?;
+                *lock = Some((server_id.clone(), new_sess));
+            }
+
+            // Извлекаем сессию и пушим команду в трубу
+            let (_, session) = lock.as_mut().unwrap();
+            let req: ClientRequest = serde_json::from_str(&req_json).unwrap();
+
+            match session.send_request(&req) {
+                Ok(resp) => Ok(resp),
+                Err(e) => {
+                    // При любой сетевой ошибке (таймаут, разрыв) уничтожаем сессию,
+                    // чтобы fallback-логика или следующий клик построили сокет заново
+                    *lock = None;
+                    Err(e)
+                }
+            }
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+
+    // Если всё улетело успешно по постоянному каналу — сразу отдаем фронтенду
+    match result {
+        Ok(resp) => return response_to_value(resp),
+        Err(_) => {
+            println!("[client] Сессия мертва или IP изменился. Запуск авто-поиска по beacon...")
+        }
+    }
+
+    // Попытка 2 (Fallback): сокет упал, возможно у ПК изменился IP-адрес. Ищем по beacon.
+    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover_client(15))
+        .await
+        .map_err(|e| e.to_string())??;
 
     let mut servers = load_servers(&data_dir)?;
     let idx = servers
@@ -63,39 +131,35 @@ async fn send_with_fallback(
         .position(|s| s.id == server_id)
         .ok_or_else(|| format!("Сервер {server_id} не найден"))?;
 
-    // Пробуем сохранённый IP
-    let result = tauri::async_runtime::spawn_blocking({
-        let server = servers[idx].clone();
-        let keypair = keypair.clone();
-        let req = serde_json::to_string(&request).unwrap();
-        move || {
-            let r: ClientRequest = serde_json::from_str(&req).unwrap();
-            connection::send(&server, &keypair, &r)
-        }
-    })
-    .await
-    .map_err(|e| e.to_string())?;
-
-    match result {
-        Ok(resp) => return response_to_value(resp),
-        Err(_) => {} // IP устарел — ищем через beacon
-    }
-
-    // Fallback: beacon discovery
-    let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover_client(15))
-        .await
-        .map_err(|e| e.to_string())??;
-
     servers[idx].ip = new_ip;
     save_servers(&data_dir, &servers)?;
 
+    // Создаем новую сессию по свежему IP и отправляем команду
     let resp = tauri::async_runtime::spawn_blocking({
-        let server = servers[idx].clone();
+        let server_id = server_id.to_string();
+        let data_dir = data_dir.clone();
         let keypair = keypair.clone();
-        let req = serde_json::to_string(&request).unwrap();
+        let req_json = req_json;
+        let session_arc = session_arc;
+
         move || {
-            let r: ClientRequest = serde_json::from_str(&req).unwrap();
-            connection::send(&server, &keypair, &r)
+            let mut lock = session_arc.lock().unwrap();
+            *lock = None; // Гарантированно чистим старый сокет
+
+            let servers = load_servers(&data_dir)?;
+            let server = servers
+                .iter()
+                .find(|s| s.id == server_id)
+                .ok_or_else(|| format!("Сервер {server_id} не найден"))?;
+
+            let mut new_sess = connection::ActiveSession::new(server, &keypair)?;
+            let req: ClientRequest = serde_json::from_str(&req_json).unwrap();
+            let res = new_sess.send_request(&req);
+
+            if res.is_ok() {
+                *lock = Some((server_id, new_sess));
+            }
+            res
         }
     })
     .await
@@ -119,10 +183,6 @@ fn response_to_value(
 // ─── Tauri-команды ────────────────────────────────────────────────────────────
 
 /// Привязать новый ПК по QR-коду.
-///
-/// qr_json  — строка из QR (то что generate_pairing_qr() вернул на ПК).
-/// name     — имя телефона (будет показано в списке устройств на ПК).
-/// nickname — как называть этот ПК в списке на телефоне.
 #[tauri::command]
 async fn pair_with_qr(
     state: tauri::State<'_, AppState>,
@@ -137,7 +197,6 @@ async fn pair_with_qr(
         (s.data_dir.clone(), s.keypair.clone())
     };
 
-    // Временный SavedServer для паринга (без id — ещё не сохранён)
     let temp = SavedServer {
         id: "_pairing_".into(),
         name: nickname.clone(),
@@ -151,10 +210,13 @@ async fn pair_with_qr(
         name,
     };
 
-    let response =
-        tauri::async_runtime::spawn_blocking(move || connection::send(&temp, &keypair, &request))
-            .await
-            .map_err(|e| e.to_string())??;
+    // Для паринга используем разовую сессию ActiveSession
+    let response = tauri::async_runtime::spawn_blocking(move || {
+        let mut session = connection::ActiveSession::new(&temp, &keypair)?;
+        session.send_request(&request)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
 
     if !response.ok {
         return Err(response.error.unwrap_or_else(|| "Паринг не удался".into()));
@@ -199,17 +261,26 @@ async fn get_servers(state: tauri::State<'_, AppState>) -> Result<serde_json::Va
 /// Удалить привязанный ПК.
 #[tauri::command]
 async fn remove_server(state: tauri::State<'_, AppState>, server_id: String) -> Result<(), String> {
-    let data_dir = state.inner().lock().await.data_dir.clone();
+    let (data_dir, session_arc) = {
+        let s = state.inner().lock().await;
+        (s.data_dir.clone(), s.session.clone())
+    };
+
+    // Если удаляем текущий сервер, закрываем его сессию сокета
+    if let Ok(mut lock) = session_arc.lock() {
+        if let Some((id, _)) = &*lock {
+            if id == &server_id {
+                *lock = None;
+            }
+        }
+    }
+
     let mut servers = load_servers(&data_dir)?;
     servers.retain(|s| s.id != server_id);
     save_servers(&data_dir, &servers)
 }
 
 /// Safe Mode: отправить системную команду.
-///
-/// command — строка: "shutdown"|"sleep"|"lock"|"volume_up"|"volume_down"|
-///                   "volume_set"|"media_play"|"media_pause"|"media_next"|"media_prev"
-/// params  — JSON (для volume_set: { "level": 50 })
 #[tauri::command]
 async fn send_safe(
     state: tauri::State<'_, AppState>,
@@ -264,7 +335,6 @@ async fn list_profiles(
 }
 
 /// Developer Mode: выполнить команду в shell.
-/// shell — "powershell" | "cmd"
 #[tauri::command]
 async fn send_shell(
     state: tauri::State<'_, AppState>,
@@ -288,13 +358,15 @@ async fn send_shell(
 }
 
 /// Принудительно найти ПК через beacon и обновить его IP.
-/// Используется когда ПК поменял IP и обычное подключение не работает.
 #[tauri::command]
 async fn discover_and_update(
     state: tauri::State<'_, AppState>,
     server_id: String,
 ) -> Result<String, String> {
-    let data_dir = state.inner().lock().await.data_dir.clone();
+    let (data_dir, session_arc) = {
+        let s = state.inner().lock().await;
+        (s.data_dir.clone(), s.session.clone())
+    };
 
     let new_ip = tauri::async_runtime::spawn_blocking(|| beacon::discover_client(20))
         .await
@@ -308,6 +380,15 @@ async fn discover_and_update(
 
     server.ip = new_ip.clone();
     save_servers(&data_dir, &servers)?;
+
+    // Обязательно сбрасываем закешированную сессию, чтобы сокет переподключился к новому IP
+    if let Ok(mut lock) = session_arc.lock() {
+        if let Some((id, _)) = &*lock {
+            if id == &server_id {
+                *lock = None;
+            }
+        }
+    }
 
     Ok(new_ip)
 }
@@ -333,7 +414,12 @@ pub fn run() {
             let keypair =
                 keypair::load_or_create(&data_dir).expect("Ошибка загрузки keypair телефона");
 
-            let state: AppState = Arc::new(Mutex::new(AppStateInner { data_dir, keypair }));
+            // Инициализируем пустое состояние пула сессий при старте
+            let state: AppState = Arc::new(Mutex::new(AppStateInner {
+                data_dir,
+                keypair,
+                session: Arc::new(std::sync::Mutex::new(None)),
+            }));
             app.manage(state);
 
             Ok(())
