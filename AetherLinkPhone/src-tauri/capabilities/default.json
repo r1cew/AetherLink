@@ -5,6 +5,10 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "store:allow-load",
+    "store:allow-set",
+    "store:allow-get",
+    "store:allow-save",
     "opener:default"
   ]
 }

@@ -30,9 +30,9 @@ android {
         create("release") {
             // Путь из gen/android/app до корня (три уровня вверх)
             storeFile = file("../../../../my-release-key.jks") 
-            storePassword = "123123"
+            storePassword = "password"
             keyAlias = "my-key-alias"
-            keyPassword = "123123"
+            keyPassword = "password"
         }
     }
 

@@ -1,0 +1,33 @@
+.main-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.name-block {
+  display: flex;
+  align-items: center;
+  height: 200px;
+}
+
+.navigation-block {
+  display: flex;
+  gap: 50px;
+}
+
+.nav-btn {
+  background: none;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  padding-bottom: 2px;
+}
+
+.active-btn {
+  border-bottom: 2px solid var(--red);
+}
+
+.components-block {
+  width: 75vw;
+}
