@@ -1,9 +1,13 @@
 [package]
-name = "AetherLink"
+name = "aetherlink"
 version = "0.1.0"
 description = "AetherLink - Remote PC Control"
 authors = ["Backend: https://github.com/r1cew", "UI: https://github.com/XtadeRe"]
 edition = "2021"
+
+[[bin]]
+name = "AetherLink"
+path = "src/main.rs"
 
 [lib]
 name = "aetherlink_lib"
@@ -32,3 +36,6 @@ rand           = "0.8"
 
 # startup
 winreg         = "0.56.0"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
