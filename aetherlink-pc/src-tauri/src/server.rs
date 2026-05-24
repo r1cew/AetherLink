@@ -212,6 +212,40 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
             shell::execute(cmd, shell)
         }
 
+        ClientRequest::GetMode => {
+            let mode_str = match device.mode {
+                DeviceMode::Default => "default",
+                DeviceMode::Developer => "developer",
+            };
+            ServerResponse::ok_data(serde_json::json!({ "mode": mode_str }))
+        }
+
+        ClientRequest::AddProfile {
+            name,
+            description,
+            kind,
+        } => {
+            if device.mode != DeviceMode::Developer {
+                return ServerResponse::err("Для добавления команд нужен режим Developer.");
+            }
+            match serde_json::from_value::<automation::ProfileKind>(kind) {
+                Ok(profile_kind) => {
+                    let profile = automation::Profile::new(name, description, profile_kind);
+                    match automation::load(&data_dir) {
+                        Ok(mut profiles) => {
+                            profiles.push(profile);
+                            match automation::save(&data_dir, &profiles) {
+                                Ok(_) => ServerResponse::ok(),
+                                Err(e) => ServerResponse::err(format!("Ошибка сохранения: {e}")),
+                            }
+                        }
+                        Err(e) => ServerResponse::err(e),
+                    }
+                }
+                Err(e) => ServerResponse::err(format!("Неверный формат команды: {e}")),
+            }
+        }
+
         ClientRequest::Pair { .. } => ServerResponse::err("Устройство уже привязано."),
     }
 }

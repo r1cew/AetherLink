@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-// ─── Запросы от телефона ──────────────────────────────────────────────────────
+// ─── Запросы от телефона ─────────────────────────────────────────────────
 
 // Добавляем и Serialize, и Deserialize, и Clone, чтобы обе стороны могли работать с enum
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum ClientRequest {
     /// Первичная привязка устройства.
-    Pair { token: String, name: String },
+    Pair {
+        token: String,
+        name: String,
+    },
 
     /// Safe Mode — готовые системные команды.
     Safe {
@@ -17,9 +20,11 @@ pub enum ClientRequest {
     },
 
     /// Automation Mode — запуск заранее созданного профиля.
-    RunProfile { profile_id: String },
+    RunProfile {
+        profile_id: String,
+    },
 
-    /// Automation Mode — список всех профилей.
+    /// Automation Mode — список ��сех профилей.
     ListProfiles,
 
     /// Developer Mode — raw команда в shell.
@@ -28,9 +33,45 @@ pub enum ClientRequest {
         #[serde(default = "ShellType::default")]
         shell: ShellType,
     },
+
+    /// Developer Mode — проверка наличия dev статуса.
+    CheckDevStatus,
+
+    /// Developer Mode — создать новый профиль автоматизации.
+    CreateProfile {
+        name: String,
+        description: Option<String>,
+        #[serde(default)]
+        commands: serde_json::Value,
+    },
+
+    /// Developer Mode — обновить существующий профиль.
+    UpdateProfile {
+        profile_id: String,
+        name: Option<String>,
+        description: Option<String>,
+        commands: Option<Vec<ProfileCommand>>,
+    },
+
+    GetDevProfiles,
+
+    /// Developer Mode — удалить профиль.
+    DeleteProfile {
+        profile_id: String,
+    },
 }
 
-// ─── Safe Mode команды ────────────────────────────────────────────────────────
+// ─── Команда профиля ────────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProfileCommand {
+    pub action: String, // "safe", "shell", "wait", etc.
+    #[serde(default)]
+    pub params: serde_json::Value, // Параметры команды
+    pub delay_ms: Option<u32>, // Задержка перед выполнением (мс)
+}
+
+// ─── Safe Mode команды ────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -47,7 +88,7 @@ pub enum SafeCommand {
     MediaPrev,
 }
 
-// ─── Shell type ───────────────────────────────────────────────────────────────
+// ─── Shell type ─────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -63,7 +104,7 @@ impl ShellType {
     }
 }
 
-// ─── Ответ от сервера ─────────────────────────────────────────────────────────
+// ─── Ответ от сервера ──────────────────────────────────────────────────
 
 // Объединяем: даем и Serialize (для ПК), и Deserialize (для телефона)
 #[derive(Debug, Serialize, Deserialize, Clone)]

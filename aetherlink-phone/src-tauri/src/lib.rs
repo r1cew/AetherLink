@@ -180,9 +180,7 @@ fn response_to_value(
     }
 }
 
-// ─── Tauri-команды ────────────────────────────────────────────────────────────
-
-/// Привязать новый ПК по QR-коду.
+// ───  Привязать новый ПК по QR-коду ────────────────────────────────────────────
 #[tauri::command]
 async fn pair_with_qr(
     state: tauri::State<'_, AppState>,
@@ -239,6 +237,7 @@ async fn pair_with_qr(
     Ok(server_id)
 }
 
+// ───  Работа с привязанными ПК ────────────────────────────────────────────
 /// Список привязанных ПК (без приватных ключей).
 #[tauri::command]
 async fn get_servers(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
@@ -280,6 +279,8 @@ async fn remove_server(state: tauri::State<'_, AppState>, server_id: String) -> 
     save_servers(&data_dir, &servers)
 }
 
+// ─── Работа с Safe Mode ────────────────────────────────────────────
+
 /// Safe Mode: отправить системную команду.
 #[tauri::command]
 async fn send_safe(
@@ -310,6 +311,8 @@ async fn send_safe(
     send_with_fallback(state.inner(), &server_id, request).await
 }
 
+// ─── Работа с Automation Mode ────────────────────────────────────────────
+
 /// Automation Mode: запустить профиль по ID.
 #[tauri::command]
 async fn send_run_profile(
@@ -334,6 +337,8 @@ async fn list_profiles(
     send_with_fallback(state.inner(), &server_id, ClientRequest::ListProfiles).await
 }
 
+// ─── Работа с Developer Mode ────────────────────────────────────────────
+
 /// Developer Mode: выполнить команду в shell.
 #[tauri::command]
 async fn send_shell(
@@ -356,6 +361,62 @@ async fn send_shell(
     )
     .await
 }
+
+/// Developer Mode: проверить наличие dev статуса на ПК.
+#[tauri::command]
+async fn check_dev_status(
+    state: tauri::State<'_, AppState>,
+    server_id: String,
+) -> Result<serde_json::Value, String> {
+    send_with_fallback(state.inner(), &server_id, ClientRequest::CheckDevStatus).await
+}
+
+/// Developer Mode: создать новый профиль с мобилки.
+#[tauri::command]
+async fn create_profile(
+    state: tauri::State<'_, AppState>,
+    server_id: String,
+    name: String,
+    description: Option<String>,
+    commands: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    send_with_fallback(
+        state.inner(),
+        &server_id,
+        ClientRequest::CreateProfile {
+            name,
+            description,
+            commands,
+        },
+    )
+    .await
+}
+
+/// Developer Mode: получить список профилей для редактирования.
+#[tauri::command]
+async fn get_dev_profiles(
+    state: tauri::State<'_, AppState>,
+    server_id: String,
+) -> Result<serde_json::Value, String> {
+    send_with_fallback(state.inner(), &server_id, ClientRequest::GetDevProfiles).await
+}
+
+/// Developer Mode: удалить профиль.
+#[tauri::command]
+async fn delete_profile(
+    state: tauri::State<'_, AppState>,
+    server_id: String,
+    profile_id: String,
+) -> Result<serde_json::Value, String> {
+    send_with_fallback(
+        state.inner(),
+        &server_id,
+        ClientRequest::DeleteProfile { profile_id },
+    )
+    .await
+}
+
+// ─── beacon ────────────────────────────────────────────
 
 /// Принудительно найти ПК через beacon и обновить его IP.
 #[tauri::command]
@@ -429,6 +490,10 @@ pub fn run() {
             send_run_profile,
             list_profiles,
             send_shell,
+            check_dev_status,
+            create_profile,
+            get_dev_profiles,
+            delete_profile,
             discover_and_update,
         ])
         .run(tauri::generate_context!())
