@@ -1,14 +1,6 @@
 {
   "identifier": "mobile-capability",
-  "platforms": [
-    "android",
-    "iOS"
-  ],
-  "windows": [
-    "main"
-  ],
-  "permissions": [
-    "barcode-scanner:default",
-    "store:default"
-  ]
+  "platforms": ["android", "iOS"],
+  "windows": ["main"],
+  "permissions": ["store:default"]
 }

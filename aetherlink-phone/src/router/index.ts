@@ -5,16 +5,8 @@ import MainPage from "../views/MainPage.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: "/main",
-      name: "auth",
-      component: Authorization,
-    },
-    {
-      path: "/",
-      name: "main",
-      component: MainPage,
-    },
+    { path: "/", name: "auth", component: Authorization }, // На / грузится Авторизация
+    { path: "/main", name: "main", component: MainPage }, // На /main грузится MainPage
   ],
 });
 

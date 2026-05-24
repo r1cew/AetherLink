@@ -23,9 +23,14 @@ impl ActiveSession {
     pub fn new(server: &SavedServer, keypair: &PhoneKeypair) -> Result<Self, String> {
         let addr = format!("{}:{}", server.ip, server.port);
 
-        let socket_addr: SocketAddr = addr.parse().map_err(|e| format!("Неверный адрес: {e}"))?;
+        // Парсим строку в системный формат SocketAddr (без блокирующего DNS-вызова, так как там IP)
+        let socket_addr: std::net::SocketAddr = addr
+            .parse()
+            .map_err(|e| format!("Неверный формат адреса {addr}: {e}"))?;
+
+        // Подключаемся с жестким таймаутом в 4 секунды (вместо бесконечного ожидания ОС)
         let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(4))
-            .map_err(|e| format!("Превышен таймаут подключения к {addr}: {e}"))?;
+            .map_err(|e| format!("Превышено время ожидания подключения к {addr}: {e}"))?;
 
         // КРИТИЧНО ДЛЯ ПИНГА: Отправляем пакеты мгновенно, не ждем буферизации ОС
         stream.set_nodelay(true).map_err(|e| e.to_string())?;

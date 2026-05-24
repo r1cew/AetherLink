@@ -1,16 +1,7 @@
-import { ref, watch, onUnmounted } from "vue";
+import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Store } from "@tauri-apps/plugin-store";
 
-import {
-  scan,
-  cancel,
-  Format,
-  checkPermissions,
-  requestPermissions,
-} from "@tauri-apps/plugin-barcode-scanner";
-
-// ── Интерфейсы типов ──────────────────────────────────────────────────────────
 interface Server {
   id: string;
   name: string;
@@ -24,37 +15,33 @@ interface Profile {
   description?: string;
 }
 
-type Screen = "servers" | "pair" | "control";
+// type Screen = "servers" | "pair" | "control";
+
+// ── Глобальный стейт приложения (вынесен за пределы функции для совместного использования) ──────────────────
+const screen = ref<string>("servers"); // По умолчанию всегда стартуем тут
+const servers = ref<Server[]>([]);
+const active = ref<Server | null>(null);
+const profiles = ref<Profile[]>([]);
+const log = ref("");
+const loading = ref(false);
+const isScanning = ref(false);
+const isJustConnected = ref(false);
+
+const qrText = ref("");
+const phoneName = ref("Мой телефон");
+const pcName = ref("Домашний ПК");
+const shellCmd = ref("");
 
 export function useAetherLink() {
   const storePromise = Store.load("settings.json");
 
-  // ── Реактивные переменные (Стейт) ──────────────────────────────────────────────
-  const screen = ref<Screen>("servers");
-  const servers = ref<Server[]>([]);
-  const active = ref<Server | null>(null);
-  const profiles = ref<Profile[]>([]);
-  const log = ref("");
-  const loading = ref(false);
-  const isScanning = ref(false);
-  const isJustConnected = ref(false);
-
-  const qrText = ref("");
-  const phoneName = ref("Мой телефон");
-  const pcName = ref("Домашний ПК");
-  const shellCmd = ref("");
-
+  // ── Логика работы с памятью ──────────────────────────────────────────────────
   async function saveConnectionData() {
     try {
       const store = await storePromise;
-      if (active.value) {
-        await store.set("activeServer", active.value);
-        console.log("✅ Сервер сохранен:", active.value.id);
-      }
-      if (profiles.value.length > 0) {
+      if (active.value) await store.set("activeServer", active.value);
+      if (profiles.value.length > 0)
         await store.set("profiles", profiles.value);
-        console.log("✅ Профили сохранены");
-      }
       await store.save();
     } catch (e) {
       console.error("Ошибка сохранения:", e);
@@ -63,64 +50,56 @@ export function useAetherLink() {
 
   async function loadConnectionData() {
     try {
-      const store = await storePromise; // 👈 получаем store из Promise
+      const store = await storePromise;
       const savedServer = await store.get("activeServer");
       const savedProfiles = await store.get("profiles");
 
-      if (savedServer) {
-        active.value = savedServer as Server;
-        console.log("📦 Загружен сервер:", active.value.name);
-      }
-
-      if (savedProfiles) {
-        profiles.value = savedProfiles as Profile[];
-        console.log("📦 Загружено профилей:", profiles.value.length);
-      }
+      if (savedServer) active.value = savedServer as Server;
+      if (savedProfiles) profiles.value = savedProfiles as Profile[];
 
       if (savedServer) {
         isJustConnected.value = true;
         await loadServers();
-        if (active.value) {
-          await loadProfiles(active.value);
-        }
+        if (active.value) await loadProfiles(active.value);
+
+        // ЖЕСТКИЙ ФИКС: Убрали отсюда принудительный screen.value = "control"
+        // Теперь приложение загрузит данные в память, но ОСТАНЕТСЯ на странице авторизации/выбора серверов!
       }
     } catch (e) {
       console.error("Ошибка загрузки:", e);
     }
   }
 
+  // Очистка данных (разрыв связки с ПК)
+  async function resetConnection() {
+    try {
+      const store = await storePromise;
+      await store.delete("activeServer");
+      await store.delete("profiles");
+      await store.save();
+      active.value = null;
+      profiles.value = [];
+      screen.value = "servers";
+      await loadServers();
+    } catch (e) {
+      console.error("Ошибка сброса:", e);
+    }
+  }
+
   loadConnectionData();
 
-  // Вспомогательная функция для логов
   function msg(text: string) {
     log.value = text;
   }
 
-  // ── Логика управления прозрачностью body при сканировании ──────────────────────
-  watch(isScanning, (newValue) => {
-    if (newValue) {
-      document.body.classList.add("scanning-active");
-    } else {
-      document.body.classList.remove("scanning-active");
-    }
-  });
-
-  // На случай внезапного демонтирования компонента чистим класс
-  onUnmounted(() => {
-    document.body.classList.remove("scanning-active");
-  });
-
-  // ── Загрузка серверов ─────────────────────────────────────────────────────────
   async function loadServers() {
     try {
-      const list = await invoke<Server[]>("get_servers");
-      servers.value = list;
+      servers.value = await invoke<Server[]>("get_servers");
     } catch (e) {
       msg(`Ошибка: ${e}`);
     }
   }
 
-  // ── Загрузка профилей автоматизации ───────────────────────────────────────────
   async function loadProfiles(server: Server) {
     try {
       const list = await invoke<Profile[]>("list_profiles", {
@@ -132,7 +111,6 @@ export function useAetherLink() {
     }
   }
 
-  // ── Действия с серверами ──────────────────────────────────────────────────────
   function selectServer(s: Server) {
     active.value = s;
     log.value = "";
@@ -140,10 +118,9 @@ export function useAetherLink() {
     screen.value = "control";
   }
 
-  // ── Авто-подключение после сканирования ───────────────────────────────────────
   async function autoConnect(content: string) {
     loading.value = true;
-    msg("Подключение...");
+    msg("Подключение к ПК...");
     try {
       const id = await invoke<string>("pair_with_qr", {
         qrJson: content.trim(),
@@ -160,60 +137,29 @@ export function useAetherLink() {
         isJustConnected.value = true;
         await loadProfiles(newServer);
         screen.value = "control";
-
         await saveConnectionData();
       } else {
         screen.value = "servers";
       }
     } catch (e) {
-      msg(`❌ ${e}`);
+      msg(`❌ Ошибка сопряжения: ${e}`);
+      screen.value = "servers";
     } finally {
       loading.value = false;
     }
   }
 
-  // ── Работа с камерой (QR) ─────────────────────────────────────────────────────
-  async function startQrScan() {
+  function startQrScan() {
     log.value = "";
-    try {
-      let permission = await checkPermissions();
-      if (permission !== "granted") {
-        msg("Запрашиваю доступ к камере...");
-        permission = await requestPermissions();
-      }
-      if (permission !== "granted") {
-        msg("Доступ к камере отклонен. Включите в настройках телефона.");
-        return;
-      }
-
-      isScanning.value = true;
-      const result = await scan({ formats: [Format.QRCode] });
-
-      isScanning.value = false;
-
-      if (result?.content) {
-        await autoConnect(result.content);
-      }
-    } catch (e) {
-      msg(`Ошибка: ${e}`);
-    } finally {
-      isScanning.value = false;
-    }
+    isScanning.value = true;
   }
 
-  async function stopQrScan() {
-    try {
-      await cancel();
-    } catch {}
+  function stopQrScan() {
     isScanning.value = false;
   }
 
-  // ── Ручной паринг через JSON ──────────────────────────────────────────────────
   async function pair() {
-    if (!qrText.value.trim()) {
-      msg("Сначала отсканируй QR или вставь JSON");
-      return;
-    }
+    if (!qrText.value.trim()) return msg("Вставь JSON или отсканируй QR");
     loading.value = true;
     try {
       const id = await invoke<string>("pair_with_qr", {
@@ -232,7 +178,6 @@ export function useAetherLink() {
     }
   }
 
-  // ── Вызовы системных команд (Default Mode) ────────────────────────────────────
   async function safe(command: string, params?: object) {
     if (!active.value) return;
     loading.value = true;
@@ -250,7 +195,6 @@ export function useAetherLink() {
     }
   }
 
-  // ── Запуск профилей автоматизации ─────────────────────────────────────────────
   async function runProfile(profileId: string, name: string) {
     if (!active.value) return;
     loading.value = true;
@@ -267,7 +211,6 @@ export function useAetherLink() {
     }
   }
 
-  // ── PowerShell терминал ───────────────────────────────────────────────────────
   async function runShell() {
     if (!active.value || !shellCmd.value.trim()) return;
     loading.value = true;
@@ -286,7 +229,6 @@ export function useAetherLink() {
     }
   }
 
-  // ── Локальный Beacon поиск ПК ─────────────────────────────────────────────────
   async function discover() {
     if (!active.value) return;
     loading.value = true;
@@ -305,7 +247,6 @@ export function useAetherLink() {
   }
 
   return {
-    // State
     screen,
     servers,
     active,
@@ -318,8 +259,6 @@ export function useAetherLink() {
     pcName,
     shellCmd,
     isJustConnected,
-
-    // Methods
     selectServer,
     startQrScan,
     stopQrScan,
@@ -330,5 +269,7 @@ export function useAetherLink() {
     runShell,
     discover,
     loadServers,
+    autoConnect,
+    resetConnection,
   };
 }

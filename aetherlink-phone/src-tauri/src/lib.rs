@@ -399,9 +399,6 @@ async fn discover_and_update(
 pub fn run() {
     let builder = tauri::Builder::default().plugin(tauri_plugin_store::Builder::new().build());
 
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
-
     builder
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {

@@ -6,7 +6,6 @@
     "tauri": "echo skip"
   },
   "dependencies": {
-    "@tauri-apps/plugin-barcode-scanner": "^2.4.4",
     "@tauri-apps/plugin-store": "^2.4.3"
   }
 }
