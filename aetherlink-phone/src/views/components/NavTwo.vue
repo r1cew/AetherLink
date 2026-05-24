@@ -12,14 +12,19 @@
       Запустить
     </button>
   </div>
+  <div></div>
 </template>
 
 <script setup lang="ts">
 import { useAetherLink } from "../../composables/useAetherLink";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
-const { profiles, runProfile } = useAetherLink();
+const { profiles, runProfile, checkDev } = useAetherLink();
 const selectedProfileId = ref<string>("");
+
+onMounted(() => {
+  checkDev();
+});
 </script>
 
 <style scoped>

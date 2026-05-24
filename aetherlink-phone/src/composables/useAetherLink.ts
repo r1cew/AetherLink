@@ -186,6 +186,19 @@ export function useAetherLink() {
     }
   }
 
+  async function checkDev() {
+    if (!active.value) return;
+    loading.value = true;
+    try {
+      const dev = await invoke("check_dev_status", {
+        serverId: active.value.id,
+      });
+      console.log(dev);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async function safe(command: string, params?: object) {
     if (!active.value) return;
     loading.value = true;
@@ -252,6 +265,7 @@ export function useAetherLink() {
     selectServer,
     startQrScan,
     stopQrScan,
+    checkDev,
     pair,
     saveConnectionData,
     safe,
