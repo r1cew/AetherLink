@@ -220,6 +220,68 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
             ServerResponse::ok_data(serde_json::json!({ "mode": mode_str }))
         }
 
+        ClientRequest::CheckDevStatus => {
+            let mode_str = match device.mode {
+                DeviceMode::Default => "default",
+                DeviceMode::Developer => "developer",
+            };
+            ServerResponse::ok_data(serde_json::json!({
+                "mode": mode_str,
+                "is_dev": device.mode == DeviceMode::Developer
+            }))
+        }
+
+        ClientRequest::CreateProfile {
+            name,
+            description,
+            commands,
+        } => {
+            if device.mode != DeviceMode::Developer {
+                return ServerResponse::err("Для создания профилей нужен режим Developer.");
+            }
+            match automation::load(&data_dir) {
+                Ok(mut profiles) => {
+                    let profile = automation::Profile::new(name, description, commands);
+                    profiles.push(profile);
+                    match automation::save(&data_dir, &profiles) {
+                        Ok(_) => ServerResponse::ok_data(serde_json::json!({
+                            "id": profiles.last().unwrap().id
+                        })),
+                        Err(e) => ServerResponse::err(format!("Ошибка сохранения: {e}")),
+                    }
+                }
+                Err(e) => ServerResponse::err(e),
+            }
+        }
+
+        ClientRequest::GetDevProfiles => {
+            if device.mode != DeviceMode::Developer {
+                return ServerResponse::err("Для редактирования профилей нужен режим Developer.");
+            }
+            match automation::load(&data_dir) {
+                Ok(profiles) => {
+                    ServerResponse::ok_data(serde_json::to_value(&profiles).unwrap_or_default())
+                }
+                Err(e) => ServerResponse::err(e),
+            }
+        }
+
+        ClientRequest::DeleteProfile { profile_id } => {
+            if device.mode != DeviceMode::Developer {
+                return ServerResponse::err("Для удаления профилей нужен режим Developer.");
+            }
+            match automation::load(&data_dir) {
+                Ok(mut profiles) => {
+                    profiles.retain(|p| p.id != profile_id);
+                    match automation::save(&data_dir, &profiles) {
+                        Ok(_) => ServerResponse::ok(),
+                        Err(e) => ServerResponse::err(format!("Ошибка сохранения: {e}")),
+                    }
+                }
+                Err(e) => ServerResponse::err(e),
+            }
+        }
+
         ClientRequest::AddProfile {
             name,
             description,

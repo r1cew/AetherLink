@@ -2,15 +2,11 @@ use serde::{Deserialize, Serialize};
 
 // ─── Запросы от телефона ─────────────────────────────────────────────────
 
-// Добавляем и Serialize, и Deserialize, и Clone, чтобы обе стороны могли работать с enum
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum ClientRequest {
     /// Первичная привязка устройства.
-    Pair {
-        token: String,
-        name: String,
-    },
+    Pair { token: String, name: String },
 
     /// Safe Mode — готовые системные команды.
     Safe {
@@ -20,11 +16,9 @@ pub enum ClientRequest {
     },
 
     /// Automation Mode — запуск заранее созданного профиля.
-    RunProfile {
-        profile_id: String,
-    },
+    RunProfile { profile_id: String },
 
-    /// Automation Mode — список ��сех профилей.
+    /// Automation Mode — список всех профилей.
     ListProfiles,
 
     /// Developer Mode — raw команда в shell.
@@ -34,10 +28,13 @@ pub enum ClientRequest {
         shell: ShellType,
     },
 
+    /// Получить режим устройства.
+    GetMode,
+
     /// Developer Mode — проверка наличия dev статуса.
     CheckDevStatus,
 
-    /// Developer Mode — создать новый профиль автоматизации.
+    /// Developer Mode — создать профиль с мобилки.
     CreateProfile {
         name: String,
         description: Option<String>,
@@ -45,19 +42,18 @@ pub enum ClientRequest {
         commands: serde_json::Value,
     },
 
-    /// Developer Mode — обновить существующий профиль.
-    UpdateProfile {
-        profile_id: String,
-        name: Option<String>,
-        description: Option<String>,
-        commands: Option<Vec<ProfileCommand>>,
-    },
-
+    /// Developer Mode — получить список профилей для редактирования.
     GetDevProfiles,
 
     /// Developer Mode — удалить профиль.
-    DeleteProfile {
-        profile_id: String,
+    DeleteProfile { profile_id: String },
+
+    /// Developer Mode — добавить команду в профиль (старый вариант).
+    AddProfile {
+        name: String,
+        description: Option<String>,
+        #[serde(default)]
+        kind: serde_json::Value,
     },
 }
 
