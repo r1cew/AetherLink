@@ -1,18 +1,26 @@
 <template>
   <div>
-    <select>
-      <option>bat</option>
-      <option>program</option>
-      <option>powershell</option>
+    <select v-model="selectedProfileId">
+      <option v-for="profile in profiles" :key="profile.id" :value="profile.id">
+        {{ profile.name }}
+      </option>
     </select>
-    <select>
-      <option>Задача 1</option>
-      <option>Задача 2</option>
-      <option>Задача 3</option>
-    </select>
-    <button>Запустить</button>
+    <button
+      @click="runProfile(selectedProfileId)"
+      :disabled="!selectedProfileId"
+    >
+      Запустить
+    </button>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useAetherLink } from "../../composables/useAetherLink";
+import { ref } from "vue";
+
+const { profiles, runProfile } = useAetherLink();
+const selectedProfileId = ref<string>("");
+</script>
 
 <style scoped>
 div {
