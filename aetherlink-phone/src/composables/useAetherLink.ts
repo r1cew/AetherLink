@@ -18,7 +18,7 @@ interface Profile {
 // type Screen = "servers" | "pair" | "control";
 
 // ── Глобальный стейт приложения (вынесен за пределы функции для совместного использования) ──────────────────
-const screen = ref<string>("servers"); // По умолчанию всегда стартуем тут
+const screen = ref<string>("servers");
 const servers = ref<Server[]>([]);
 const active = ref<Server | null>(null);
 const profiles = ref<Profile[]>([]);
@@ -61,9 +61,6 @@ export function useAetherLink() {
         isJustConnected.value = true;
         await loadServers();
         if (active.value) await loadProfiles(active.value);
-
-        // ЖЕСТКИЙ ФИКС: Убрали отсюда принудительный screen.value = "control"
-        // Теперь приложение загрузит данные в память, но ОСТАНЕТСЯ на странице авторизации/выбора серверов!
       }
     } catch (e) {
       console.error("Ошибка загрузки:", e);
@@ -80,6 +77,7 @@ export function useAetherLink() {
       active.value = null;
       profiles.value = [];
       screen.value = "servers";
+      isJustConnected.value = false;
       await loadServers();
     } catch (e) {
       console.error("Ошибка сброса:", e);

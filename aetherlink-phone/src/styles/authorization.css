@@ -1,71 +1,71 @@
 .auth-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  height: 100vh;
 }
 
 .auth-page > h1 {
-    display: flex;
-    align-items: center;
-    height: 200px;
-    margin: 0;
+  display: flex;
+  align-items: center;
+  height: 200px;
+  margin: 0;
 }
 
 .status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    gap: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .status span {
-    background: var(--status);
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 24px;
-    width: fit-content;
-    max-width: fit-content;
+  background: var(--status);
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 24px;
+  width: fit-content;
+  max-width: fit-content;
 }
 
 .status p {
-    margin: 0;
-    text-align: center;
+  margin: 0;
+  text-align: center;
 }
 
 .btns {
-    margin-top: 24px;
-    display: flex;
-    justify-content: center;
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .btns button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 296px;
-    height: 50px;
-    padding: 0;
-    margin: 0;
-    font-family: inherit;
-    font-size: inherit;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    background: none;
-    color: var(--text);
-    border: 2px solid var(--red);
-    border-radius: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 296px;
+  height: 50px;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background: none;
+  color: var(--text);
+  border: 2px solid var(--red);
+  border-radius: 13px;
 }
 
 .btns button:active {
-    background: var(--red);
+  background: var(--red);
 }

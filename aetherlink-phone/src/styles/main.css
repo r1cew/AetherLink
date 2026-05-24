@@ -3,40 +3,67 @@ body.scanning-active,
 body.scanning-active #app,
 body.scanning-active .auth-page,
 body.scanning-active .main-page {
-    background: transparent !important;
-    background-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .main-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 
 .name-block {
-    display: flex;
-    align-items: center;
-    height: 200px;
+  display: flex;
+  align-items: center;
+  height: 200px;
+}
+
+.status-block {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.logout-btn:hover {
+  opacity: 1;
+}
+
+.status-block img {
+  width: 13px;
+  transform: scaleX(-1);
+  height: 13px;
 }
 
 .navigation-block {
-    display: flex;
-    gap: 50px;
+  display: flex;
+  gap: 50px;
 }
 
 .nav-btn {
-    background: none;
-    color: var(--text);
-    border: none;
-    cursor: pointer;
-    padding-bottom: 2px;
+  background: none;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  padding-bottom: 2px;
 }
 
 .active-btn {
-    border-bottom: 2px solid var(--red);
+  border-bottom: 2px solid var(--red);
 }
 
 .components-block {
-    width: 75vw;
+  width: 75vw;
 }

@@ -6,7 +6,13 @@
         <span class="status-default">{{
           isJustConnected ? "Подключен" : "Не подключен"
         }}</span>
-        <p>Устройство найдено ✓</p>
+        <p>
+          {{
+            servers.length > 0
+              ? "Устройство найдено!"
+              : "Устройство не распознано"
+          }}
+        </p>
         <p>Ожидаем авторизацию</p>
         <div class="btns">
           <button @click="startQrScan">Войти</button>
@@ -22,7 +28,10 @@ import { useRouter } from "vue-router";
 import { watch, onMounted } from "vue";
 
 const router = useRouter();
-const { startQrScan, isJustConnected, active, profiles } = useAetherLink();
+const { startQrScan, isJustConnected, active, profiles, servers } =
+  useAetherLink();
+
+console.log(servers);
 
 onMounted(() => {
   if (active.value || profiles.value.length > 0) {

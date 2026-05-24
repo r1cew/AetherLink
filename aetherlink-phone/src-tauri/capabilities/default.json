@@ -9,6 +9,7 @@
     "store:allow-set",
     "store:allow-get",
     "store:allow-save",
+    "store:allow-delete",
     "opener:default"
   ]
 }
