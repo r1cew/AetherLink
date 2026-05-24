@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="devStatus && devStatus === true">
     <select v-model="selectedProfileId">
       <option v-for="profile in profiles" :key="profile.id" :value="profile.id">
         {{ profile.name }}
@@ -12,19 +12,19 @@
       Запустить
     </button>
   </div>
-  <div></div>
+  <div v-else>
+    Дев статус не найден (Заглушка пока что, мейби там ошибка. Чекай консоль)<br />
+    <br />
+    Мейби если ошибки не будет будет отображать инфу с запуском команд
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useAetherLink } from "../../composables/useAetherLink";
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
-const { profiles, runProfile, checkDev } = useAetherLink();
+const { profiles, runProfile, devStatus } = useAetherLink();
 const selectedProfileId = ref<string>("");
-
-onMounted(() => {
-  checkDev();
-});
 </script>
 
 <style scoped>

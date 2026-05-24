@@ -26,6 +26,7 @@ const log = ref("");
 const loading = ref(false);
 const isScanning = ref(false);
 const isJustConnected = ref(false);
+const devStatus = ref<any>(null);
 const error = ref<string>("");
 
 const qrText = ref("");
@@ -193,9 +194,13 @@ export function useAetherLink() {
       const dev = await invoke("check_dev_status", {
         serverId: active.value.id,
       });
+      devStatus.value = dev;
       console.log(dev);
     } catch (e) {
       console.log(e);
+      devStatus.value = null;
+    } finally {
+      loading.value = false;
     }
   }
 
@@ -261,6 +266,7 @@ export function useAetherLink() {
     phoneName,
     pcName,
     shellCmd,
+    devStatus,
     isJustConnected,
     selectServer,
     startQrScan,
