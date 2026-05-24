@@ -50,8 +50,14 @@ import leave from "../assets/leave.png";
 
 const nav_page = ref(1);
 const router = useRouter();
-const { active, profiles, resetConnection, isJustConnected, stopQrScan } =
-  useAetherLink();
+const {
+  active,
+  profiles,
+  resetConnection,
+  isJustConnected,
+  stopQrScan,
+  loadProfiles,
+} = useAetherLink();
 
 console.log(active.value);
 
@@ -62,6 +68,7 @@ async function logout() {
 
 onMounted(() => {
   stopQrScan();
+  loadProfiles(active.value);
 });
 </script>
 

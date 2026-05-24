@@ -1,24 +1,23 @@
 <template>
   <div>
     <div class="input-block">
-      <input />
+      <input placeholder="Название*" />
       <button>+</button>
     </div>
-    <select>
-      <option>Задача 1</option>
-      <option>Задача 2</option>
-      <option>Задача 3</option>
+    <div><input placeholder="Описание" /></div>
+    <select v-model="newTask.type">
+      <option value="run_bat">Запуск bat*</option>
+      <option value="run_exe">Запуск программы*</option>
+      <option value="power_shell">PowerShell*</option>
     </select>
-    <div class="history">
-      <p>Ваши последние команды:</p>
-      <div>
-        <button>Задача 1</button>
-        <button>Задача 2</button>
-        <button>Задача 3</button>
-      </div>
-    </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useAetherLink } from "../../composables/useAetherLink";
+
+const { newTask } = useAetherLink();
+</script>
 
 <style scoped>
 div {

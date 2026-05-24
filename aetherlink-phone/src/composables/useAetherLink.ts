@@ -26,11 +26,21 @@ const log = ref("");
 const loading = ref(false);
 const isScanning = ref(false);
 const isJustConnected = ref(false);
+const error = ref<string>("");
 
 const qrText = ref("");
 const phoneName = ref("Мой телефон");
 const pcName = ref("Домашний ПК");
 const shellCmd = ref("");
+
+const newTask = ref({
+  name: "",
+  description: "",
+  type: "run_bat",
+  path: "",
+  args: "",
+  script: "", // Для PowerShell
+});
 
 export function useAetherLink() {
   const storePromise = Store.load("settings.json");
@@ -140,7 +150,7 @@ export function useAetherLink() {
         screen.value = "servers";
       }
     } catch (e) {
-      msg(`❌ Ошибка сопряжения: ${e}`);
+      msg(`Ошибка сопряжения: ${e}`);
       screen.value = "servers";
     } finally {
       loading.value = false;
@@ -165,12 +175,12 @@ export function useAetherLink() {
         name: phoneName.value,
         nickname: pcName.value,
       });
-      msg(`✅ Привязано! ID: ${id.slice(0, 8)}…`);
+      msg(`Привязано! ID: ${id.slice(0, 8)}…`);
       qrText.value = "";
       await loadServers();
       screen.value = "servers";
     } catch (e) {
-      msg(`❌ ${e}`);
+      msg(`Ошибка ${e}`);
     } finally {
       loading.value = false;
     }
@@ -185,15 +195,15 @@ export function useAetherLink() {
         command,
         params: params ?? null,
       });
-      msg(`✅ ${command}: ${JSON.stringify(res)}`);
+      msg(`${command}: ${JSON.stringify(res)}`);
     } catch (e) {
-      msg(`❌ ${e}`);
+      msg(`Ошибка ${e}`);
     } finally {
       loading.value = false;
     }
   }
 
-  async function runProfile(profileId: string, name: string) {
+  async function runProfile(profileId: string) {
     if (!active.value) return;
     loading.value = true;
     try {
@@ -201,25 +211,6 @@ export function useAetherLink() {
         serverId: active.value.id,
         profileId,
       });
-      msg(`✅ Запущено: ${name}`);
-    } catch (e) {
-      msg(`❌ ${e}`);
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function runShell() {
-    if (!active.value || !shellCmd.value.trim()) return;
-    loading.value = true;
-    const currentCmd = shellCmd.value;
-    try {
-      const res = await invoke<string>("send_shell", {
-        serverId: active.value.id,
-        cmd: currentCmd,
-        shell: "powershell",
-      });
-      msg(`> ${currentCmd}\n${res}`);
     } catch (e) {
       msg(`Ошибка ${e}`);
     } finally {
@@ -245,6 +236,7 @@ export function useAetherLink() {
   }
 
   return {
+    newTask,
     screen,
     servers,
     active,
@@ -264,9 +256,9 @@ export function useAetherLink() {
     saveConnectionData,
     safe,
     runProfile,
-    runShell,
     discover,
     loadServers,
+    loadProfiles,
     autoConnect,
     resetConnection,
   };
