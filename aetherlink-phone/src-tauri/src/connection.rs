@@ -132,17 +132,27 @@ impl ActiveSession {
 
         // Получаем ответ от ПК в наш buf
         let mut len_buf = [0u8; 4];
-        self.stream
-            .read_exact(&mut len_buf)
-            .map_err(|e| e.to_string())?;
+        match self.stream.read_exact(&mut len_buf) {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(format!("Ошибка чтения заголовка ответа: {}", e));
+            }
+        }
+
         let resp_len = u32::from_be_bytes(len_buf) as usize;
         if resp_len > 65535 {
             return Err(format!("Слишком большой ответ: {resp_len}"));
         }
 
-        self.stream
-            .read_exact(&mut self.buf[..resp_len])
-            .map_err(|e| e.to_string())?;
+        match self.stream.read_exact(&mut self.buf[..resp_len]) {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(format!(
+                    "Ошибка чтения тела ответа (ожидается {} байт): {}",
+                    resp_len, e
+                ));
+            }
+        }
 
         // Дешифруем из buf в tmp
         let dec_len = self
