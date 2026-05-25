@@ -24,6 +24,7 @@ import { useAetherLink } from "../../composables/useAetherLink";
 import { ref } from "vue";
 
 const { profiles, runProfile, devStatus } = useAetherLink();
+
 const selectedProfileId = ref<string>("");
 </script>
 

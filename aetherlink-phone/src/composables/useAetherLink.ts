@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Store } from "@tauri-apps/plugin-store";
+import { useRouter } from "vue-router";
 
 interface Server {
   id: string;
@@ -18,6 +19,7 @@ interface Profile {
 // type Screen = "servers" | "pair" | "control";
 
 // ── Глобальный стейт приложения (вынесен за пределы функции для совместного использования) ──────────────────
+
 const screen = ref<string>("servers");
 const servers = ref<Server[]>([]);
 const active = ref<Server | null>(null);
@@ -27,7 +29,9 @@ const loading = ref(false);
 const isScanning = ref(false);
 const isJustConnected = ref(false);
 const devStatus = ref<any>(null);
-const error = ref<string>("");
+const jsonAuth = ref<string>("");
+const router = useRouter();
+// const error = ref<string>("");
 
 const qrText = ref("");
 const phoneName = ref("Мой телефон");
@@ -125,6 +129,20 @@ export function useAetherLink() {
     log.value = "";
     loadProfiles(s);
     screen.value = "control";
+  }
+
+  async function JsonLogin() {
+    if (!jsonAuth.value.trim()) return;
+
+    try {
+      const jsonData = JSON.parse(jsonAuth.value.trim());
+
+      await autoConnect(JSON.stringify(jsonData));
+      router.push("/main");
+      jsonAuth.value = "";
+    } catch (error) {
+      console.error("Ошибка парсинга JSON:", error);
+    }
   }
 
   async function autoConnect(content: string) {
@@ -267,7 +285,9 @@ export function useAetherLink() {
     pcName,
     shellCmd,
     devStatus,
+    jsonAuth,
     isJustConnected,
+    JsonLogin,
     selectServer,
     startQrScan,
     stopQrScan,
