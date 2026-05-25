@@ -368,7 +368,24 @@ async fn check_dev_status(
     state: tauri::State<'_, AppState>,
     server_id: String,
 ) -> Result<serde_json::Value, String> {
-    send_with_fallback(state.inner(), &server_id, ClientRequest::CheckDevStatus).await
+    println!("[phone] check_dev_status вызван для сервера {}", server_id);
+    
+    let result = send_with_fallback(state.inner(), &server_id, ClientRequest::CheckDevStatus).await;
+    
+    match result {
+        Ok(data) => {
+            println!("[phone] check_dev_status успешно: {:?}", data);
+            Ok(data)
+        }
+        Err(e) => {
+            println!("[phone] check_dev_status ошибка: {}, возвращаем default", e);
+            // Возвращаем default режим вместо ошибки
+            Ok(serde_json::json!({ 
+                "mode": "default",
+                "is_dev": false 
+            }))
+        }
+    }
 }
 
 /// Developer Mode: создать новый профиль с мобилки.

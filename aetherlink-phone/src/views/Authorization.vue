@@ -49,6 +49,7 @@ console.log(servers);
 
 onMounted(() => {
   if (active.value || profiles.value.length > 0) {
+    console.log(active);
     console.log("Найдены сохраненные данные, переход на /main");
     router.push("/main");
   }
@@ -56,6 +57,7 @@ onMounted(() => {
 
 watch(isJustConnected, (connected) => {
   if (connected) {
+    console.log(active);
     router.push("/main");
   }
 });

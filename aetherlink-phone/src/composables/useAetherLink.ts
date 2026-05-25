@@ -28,7 +28,7 @@ const log = ref("");
 const loading = ref(false);
 const isScanning = ref(false);
 const isJustConnected = ref(false);
-const devStatus = ref<any>(null);
+const devStatus = ref<{ is_dev: boolean; mode: string } | null>(null);
 const jsonAuth = ref<string>("");
 const router = useRouter();
 // const error = ref<string>("");
@@ -209,9 +209,12 @@ export function useAetherLink() {
     if (!active.value) return;
     loading.value = true;
     try {
-      const dev = await invoke("check_dev_status", {
-        serverId: active.value.id,
-      });
+      const dev = await invoke<{ is_dev: boolean; mode: string }>(
+        "check_dev_status",
+        {
+          serverId: active.value.id,
+        },
+      );
       devStatus.value = dev;
       console.log(dev);
     } catch (e) {

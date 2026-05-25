@@ -1,5 +1,5 @@
 <template>
-  <div v-if="devStatus && devStatus === true">
+  <div v-if="devStatus && devStatus.is_dev === true">
     <select v-model="selectedProfileId">
       <option v-for="profile in profiles" :key="profile.id" :value="profile.id">
         {{ profile.name }}
@@ -13,9 +13,11 @@
     </button>
   </div>
   <div v-else>
-    Дев статус не найден (Заглушка пока что, мейби там ошибка. Чекай консоль)<br />
+    Режим Developer не активирован. Запуск профилей доступен только в режиме
+    Developer.<br />
+    Переключите ПК в режим Developer в настройках.<br />
     <br />
-    Мейби если ошибки не будет будет отображать инфу с запуском команд
+    Текущий статус: {{ devStatus }}
   </div>
 </template>
 

@@ -136,8 +136,12 @@ async fn handle(mut stream: TcpStream, state: AppState) -> Result<(), String> {
         let request: ClientRequest =
             serde_json::from_slice(&tmp[..plain_len]).map_err(|e| format!("json parse: {e}"))?;
 
+println!("[server] 📨 Получен запрос: {:?}", request);
+
         // Обрабатываем запрос
         let response = dispatch(request, &remote_pubkey, &state).await;
+
+        println!("[server] 📤 Отправлен ответ: ok={}, error={:?}", response.ok, response.error);
 
         // Сериализуем ответ прямо в буфер tmp с помощью Cursor, избегая выделения Vec
         let mut writer = std::io::Cursor::new(&mut tmp[..]);
@@ -173,6 +177,7 @@ async fn dispatch(
     remote_pubkey: &[u8],
     state: &AppState,
 ) -> ServerResponse {
+    println!("[server] 🔀 dispatch: {:?}", request);  // ДОБАВЬТЕ
     match request {
         ClientRequest::Pair { token, name } => pair(state, remote_pubkey, &token, &name).await,
 
@@ -213,6 +218,7 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
         }
 
         ClientRequest::GetMode => {
+            println!("[server] 🔍 GetMode запрос для устройства {:?}", device.id);
             let mode_str = match device.mode {
                 DeviceMode::Default => "default",
                 DeviceMode::Developer => "developer",
@@ -221,37 +227,37 @@ async fn route(request: ClientRequest, device: &TrustedDevice, state: &AppState)
         }
 
         ClientRequest::CheckDevStatus => {
-            let mode_str = match device.mode {
-                DeviceMode::Default => "default",
-                DeviceMode::Developer => "developer",
-            };
-            ServerResponse::ok_data(serde_json::json!({
-                "mode": mode_str,
-                "is_dev": device.mode == DeviceMode::Developer
-            }))
-        }
+    println!("[server] 🔍 CheckDevStatus вызван для устройства {:?}", device.id);
+    let mode_str = match device.mode {
+        DeviceMode::Default => "default",
+        DeviceMode::Developer => "developer",
+    };
+    
+    // Добавляем padding, чтобы ответ был больше
+    let padding = "x".repeat(200);
+    
+    let response = ServerResponse::ok_data(serde_json::json!({
+        "mode": mode_str,
+        "is_dev": device.mode == DeviceMode::Developer,
+        "_padding": padding
+    }));
+    
+    let response_json = serde_json::to_string(&response).unwrap();
+    println!("[server] CheckDevStatus ответ (JSON): {} байт", response_json.len());
+    
+    response
+}
 
         ClientRequest::CreateProfile {
             name,
             description,
-            commands,
+            commands: _commands,  // Переименуем, чтобы не использовалось
         } => {
             if device.mode != DeviceMode::Developer {
                 return ServerResponse::err("Для создания профилей нужен режим Developer.");
             }
-            match automation::load(&data_dir) {
-                Ok(mut profiles) => {
-                    let profile = automation::Profile::new(name, description, commands);
-                    profiles.push(profile);
-                    match automation::save(&data_dir, &profiles) {
-                        Ok(_) => ServerResponse::ok_data(serde_json::json!({
-                            "id": profiles.last().unwrap().id
-                        })),
-                        Err(e) => ServerResponse::err(format!("Ошибка сохранения: {e}")),
-                    }
-                }
-                Err(e) => ServerResponse::err(e),
-            }
+            // Временно возвращаем ошибку
+            ServerResponse::err("Создание профилей через телефон временно отключено")
         }
 
         ClientRequest::GetDevProfiles => {

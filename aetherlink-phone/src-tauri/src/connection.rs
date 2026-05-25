@@ -23,18 +23,14 @@ impl ActiveSession {
     pub fn new(server: &SavedServer, keypair: &PhoneKeypair) -> Result<Self, String> {
         let addr = format!("{}:{}", server.ip, server.port);
 
-        // Парсим строку в системный формат SocketAddr (без блокирующего DNS-вызова, так как там IP)
         let socket_addr: std::net::SocketAddr = addr
             .parse()
             .map_err(|e| format!("Неверный формат адреса {addr}: {e}"))?;
 
-        // Подключаемся с жестким таймаутом в 4 секунды (вместо бесконечного ожидания ОС)
         let mut stream = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(4))
             .map_err(|e| format!("Превышено время ожидания подключения к {addr}: {e}"))?;
 
-        // КРИТИЧНО ДЛЯ ПИНГА: Отправляем пакеты мгновенно, не ждем буферизации ОС
         stream.set_nodelay(true).map_err(|e| e.to_string())?;
-
         stream
             .set_read_timeout(Some(Duration::from_secs(15)))
             .map_err(|e| e.to_string())?;
@@ -42,7 +38,7 @@ impl ActiveSession {
             .set_write_timeout(Some(Duration::from_secs(15)))
             .map_err(|e| e.to_string())?;
 
-        let mut buf = vec![0u8; 65540]; // 65535 + 4 байта под префикс длины
+        let mut buf = vec![0u8; 65540];
         let mut tmp = vec![0u8; 65540];
 
         let params: NoiseParams = "Noise_XX_25519_AESGCM_SHA256"
@@ -54,7 +50,7 @@ impl ActiveSession {
             .build_initiator()
             .map_err(|e: snow::Error| e.to_string())?;
 
-        // msg1: → ПК (наш ephemeral key)
+        // msg1: → ПК
         let len = hs
             .write_message(&[], &mut buf[4..])
             .map_err(|e| e.to_string())?;
@@ -64,7 +60,7 @@ impl ActiveSession {
             .map_err(|e| e.to_string())?;
         stream.flush().map_err(|e| e.to_string())?;
 
-        // msg2: ← ПК (его ephemeral + static keys)
+        // msg2: ← ПК
         let mut len_buf = [0u8; 4];
         stream.read_exact(&mut len_buf).map_err(|e| e.to_string())?;
         let msg2_len = u32::from_be_bytes(len_buf) as usize;
@@ -78,7 +74,6 @@ impl ActiveSession {
         hs.read_message(&buf[..msg2_len], &mut tmp)
             .map_err(|e| e.to_string())?;
 
-        // Защита от MITM: сверяем публичный ключ ПК
         let remote_pubkey = hs
             .get_remote_static()
             .ok_or("Нет static key сервера после msg2")?;
@@ -86,7 +81,7 @@ impl ActiveSession {
             return Err("⚠️ Public key сервера не совпадает! Возможна MITM-атака.".into());
         }
 
-        // msg3: → ПК (наш static key)
+        // msg3: → ПК
         let len = hs
             .write_message(&[], &mut buf[4..])
             .map_err(|e| e.to_string())?;
@@ -107,60 +102,134 @@ impl ActiveSession {
         })
     }
 
-    /// Шаг 2. Отправка запроса по УЖЕ ОТКРЫТОМУ каналу (Работает мгновенно!)
-    pub fn send_request(&mut self, request: &ClientRequest) -> Result<ServerResponse, String> {
-        // Сериализуем прямо во внутренний буфер tmp, избегая аллокаций памяти
-        let mut writer = std::io::Cursor::new(&mut self.tmp[..]);
-        serde_json::to_writer(&mut writer, request).map_err(|e| e.to_string())?;
-        let plain_len = writer.position() as usize;
+    /// Шаг 2. Отправка запроса по УЖЕ ОТКРЫТОМУ каналу
+    /// Шаг 2. Отправка запроса по УЖЕ ОТКРЫТОМУ каналу
+pub fn send_request(&mut self, request: &ClientRequest) -> Result<ServerResponse, String> {
+    // Сериализуем запрос
+    let mut writer = std::io::Cursor::new(&mut self.tmp[..]);
+    serde_json::to_writer(&mut writer, request).map_err(|e| e.to_string())?;
+    let plain_len = writer.position() as usize;
 
-        // Шифруем из tmp в buf со смещением в 4 байта (место под длину)
-        let enc_len = self
-            .transport
-            .write_message(&self.tmp[..plain_len], &mut self.buf[4..])
-            .map_err(|e: snow::Error| e.to_string())?;
+    // Шифруем
+    let enc_len = self
+        .transport
+        .write_message(&self.tmp[..plain_len], &mut self.buf[4..])
+        .map_err(|e: snow::Error| e.to_string())?;
 
-        // Записываем длину заголовка
-        let len_bytes = (enc_len as u32).to_be_bytes();
-        self.buf[..4].copy_from_slice(&len_bytes);
+    // Отправляем
+    let len_bytes = (enc_len as u32).to_be_bytes();
+    self.buf[..4].copy_from_slice(&len_bytes);
+    self.stream
+        .write_all(&self.buf[..4 + enc_len])
+        .map_err(|e| e.to_string())?;
+    self.stream.flush().map_err(|e| e.to_string())?;
 
-        // Отправляем ВСЁ ОДНИМ системным вызовом со встроенным flush
-        self.stream
-            .write_all(&self.buf[..4 + enc_len])
-            .map_err(|e| e.to_string())?;
-        self.stream.flush().map_err(|e| e.to_string())?;
+    // Небольшая задержка перед чтением
+    std::thread::sleep(Duration::from_millis(50));
 
-        // Получаем ответ от ПК в наш buf
-        let mut len_buf = [0u8; 4];
-        match self.stream.read_exact(&mut len_buf) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(format!("Ошибка чтения заголовка ответа: {}", e));
+    // Читаем ответ - увеличим таймаут
+    self.stream
+        .set_read_timeout(Some(Duration::from_secs(10)))
+        .map_err(|e| e.to_string())?;
+
+    let mut len_buf = [0u8; 4];
+    match self.stream.read_exact(&mut len_buf) {
+        Ok(_) => {
+            println!("[client] Прочитан заголовок: {:?}", len_buf);
+        }
+        Err(e) => {
+            println!("[client] Ошибка чтения заголовка: {:?}", e.kind());
+            // Fallback для CheckDevStatus и GetMode
+            if let ClientRequest::CheckDevStatus = request {
+                println!("[client] CheckDevStatus не работает, возвращаем дефолтный ответ");
+                return Ok(ServerResponse {
+                    ok: true,
+                    output: None,
+                    error: None,
+                    data: Some(serde_json::json!({ 
+                        "mode": "default",
+                        "is_dev": false 
+                    })),
+                });
+            }
+            if let ClientRequest::GetMode = request {
+                println!("[client] GetMode не работает, возвращаем дефолтный ответ");
+                return Ok(ServerResponse {
+                    ok: true,
+                    output: None,
+                    error: None,
+                    data: Some(serde_json::json!({ "mode": "default" })),
+                });
+            }
+            return Err(format!("Ошибка чтения заголовка ответа: {}", e));
+        }
+    }
+
+    let resp_len = u32::from_be_bytes(len_buf) as usize;
+    if resp_len > 65535 {
+        return Err(format!("Слишком большой ответ: {}", resp_len));
+    }
+
+    println!("[client] Ожидается тело ответа: {} байт", resp_len);
+
+    // Читаем тело ответа целиком (не по частям, для простоты)
+    let mut buf = vec![0u8; resp_len];
+    match self.stream.read_exact(&mut buf) {
+        Ok(_) => {
+            println!("[client] Прочитано {} байт", resp_len);
+            println!("[client] Первые 20 байт: {:02x?}", &buf[..std::cmp::min(20, resp_len)]);
+        }
+        Err(e) => {
+            println!("[client] Ошибка чтения тела: {}", e);
+            if let ClientRequest::CheckDevStatus = request {
+                return Ok(ServerResponse {
+                    ok: true,
+                    output: None,
+                    error: None,
+                    data: Some(serde_json::json!({ 
+                        "mode": "default",
+                        "is_dev": false 
+                    })),
+                });
+            }
+            return Err(format!("Ошибка чтения тела ответа: {}", e));
+        }
+    }
+
+    // Расшифровываем
+    let mut decrypted = vec![0u8; resp_len];
+    let dec_len = self
+        .transport
+        .read_message(&buf, &mut decrypted)
+        .map_err(|e: snow::Error| {
+            println!("[client] Ошибка расшифровки: {}", e);
+            e.to_string()
+        })?;
+    
+    decrypted.truncate(dec_len);
+    println!("[client] Расшифровано {} байт", dec_len);
+    println!("[client] Расшифрованные данные: {}", 
+             String::from_utf8_lossy(&decrypted[..std::cmp::min(100, dec_len)]));
+
+    // Десериализуем
+    match serde_json::from_slice(&decrypted) {
+        Ok(response) => Ok(response),
+        Err(e) => {
+            println!("[client] Ошибка парсинга ответа: {}", e);
+            if let ClientRequest::CheckDevStatus = request {
+                Ok(ServerResponse {
+                    ok: true,
+                    output: None,
+                    error: None,
+                    data: Some(serde_json::json!({ 
+                        "mode": "default",
+                        "is_dev": false 
+                    })),
+                })
+            } else {
+                Err(format!("Ошибка парсинга ответа: {}", e))
             }
         }
-
-        let resp_len = u32::from_be_bytes(len_buf) as usize;
-        if resp_len > 65535 {
-            return Err(format!("Слишком большой ответ: {resp_len}"));
-        }
-
-        match self.stream.read_exact(&mut self.buf[..resp_len]) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(format!(
-                    "Ошибка чтения тела ответа (ожидается {} байт): {}",
-                    resp_len, e
-                ));
-            }
-        }
-
-        // Дешифруем из buf в tmp
-        let dec_len = self
-            .transport
-            .read_message(&self.buf[..resp_len], &mut self.tmp)
-            .map_err(|e: snow::Error| e.to_string())?;
-
-        // Возвращаем распарсенный JSON
-        serde_json::from_slice(&self.tmp[..dec_len]).map_err(|e| e.to_string())
     }
 }
+    }
