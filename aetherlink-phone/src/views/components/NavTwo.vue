@@ -13,11 +13,10 @@
     </button>
   </div>
   <div v-else>
-    Режим Developer не активирован. Запуск профилей доступен только в режиме
-    Developer.<br />
-    Переключите ПК в режим Developer в настройках.<br />
-    <br />
-    Текущий статус: {{ devStatus }}
+    <div class="devOffline">
+      <span>Режим Dev не активирован.</span>
+      <span>Включите Dev режим на ПК версии и перезайдите в приложение.</span>
+    </div>
   </div>
 </template>
 
@@ -41,5 +40,43 @@ button,
 select {
   padding: 10px;
   cursor: pointer;
+}
+
+select {
+  padding: 10px;
+  cursor: pointer;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid rgba(216, 50, 60, 0.3);
+  background: none;
+  color: var(--red);
+}
+
+select option {
+  background-color: #1a1a1a;
+  color: var(--red);
+}
+
+select:focus {
+  outline: none;
+  background-color: #1a1a1a;
+}
+
+button {
+  background: var(--red);
+  color: white;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+}
+
+.devOffline {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--text2);
+  text-align: center;
+  gap: 30px;
 }
 </style>

@@ -4,8 +4,8 @@
     <button @click="safe('sleep')">Sleep</button>
     <button @click="safe('lock')">LockScreen</button>
     <div class="double-btns">
-      <button @click="safe('volume_down')">Volume -</button>
-      <button @click="safe('volume_up')">Volume +</button>
+      <button @click="safe('volume_down')" class="btn1">Volume -</button>
+      <button @click="safe('volume_up')" class="btn2">Volume +</button>
     </div>
     <div class="media-btns">
       <button @click="safe('media_prev')">Prev</button>
@@ -39,6 +39,16 @@ div {
   width: 100%;
 }
 
+.btn1 {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn2 {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 .media-btns {
   display: flex;
   justify-content: center;
@@ -48,5 +58,9 @@ div {
 button {
   padding: 10px;
   cursor: pointer;
+  border-radius: 12px;
+  border: 2px solid rgba(216, 50, 60, 0.3);
+  background: none;
+  color: var(--red);
 }
 </style>
