@@ -3,6 +3,11 @@
     <div class="name-block">
       <h1>AetherLink</h1>
     </div>
+    <!-- <div class="profiles-block">
+      <div v-for="server in servers">
+        {{ server.name }}
+      </div>
+    </div> -->
     <div class="status-block">
       <span class="status-ok" style="cursor: pointer" @click="logout">
         <img :src="leave" alt="" />
@@ -56,6 +61,8 @@ const {
   resetConnection,
   isJustConnected,
   devStatus,
+  loadServers,
+  servers,
   stopQrScan,
   loadProfiles,
 } = useAetherLink();

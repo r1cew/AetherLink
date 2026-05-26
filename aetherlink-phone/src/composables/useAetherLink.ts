@@ -16,13 +16,6 @@ interface Profile {
   description?: string;
 }
 
-interface Command {
-  serverId: string;
-  name: string;
-  command: string;
-  description?: string;
-}
-
 // type Screen = "servers" | "pair" | "control";
 
 // ── Глобальный стейт приложения (вынесен за пределы функции для совместного использования) ──────────────────
@@ -38,6 +31,7 @@ const isJustConnected = ref(false);
 const devStatus = ref<{ is_dev: boolean; mode: string } | null>(null);
 const jsonAuth = ref<string>("");
 const router = useRouter();
+
 // const error = ref<string>("");
 
 const qrText = ref("");
