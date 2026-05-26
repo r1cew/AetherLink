@@ -22,11 +22,14 @@
 
 <script setup lang="ts">
 import { useAetherLink } from "../../composables/useAetherLink";
-import { ref } from "vue";
-
-const { profiles, runProfile, devStatus } = useAetherLink();
+import { ref, onMounted } from "vue";
+const { profiles, runProfile, devStatus, checkDev } = useAetherLink();
 
 const selectedProfileId = ref<string>("");
+
+onMounted(() => {
+  checkDev();
+});
 </script>
 
 <style scoped>

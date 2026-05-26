@@ -55,10 +55,9 @@ const {
   profiles,
   resetConnection,
   isJustConnected,
-  checkDev,
+  devStatus,
   stopQrScan,
   loadProfiles,
-  devStatus,
 } = useAetherLink();
 
 async function logout() {
@@ -68,7 +67,6 @@ async function logout() {
 
 onMounted(() => {
   stopQrScan();
-  checkDev();
   loadProfiles(active.value);
   console.log(devStatus.value);
 });

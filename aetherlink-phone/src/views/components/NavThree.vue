@@ -1,10 +1,17 @@
 <template>
   <div v-if="devStatus && devStatus.is_dev === true">
     <div class="input-block">
-      <input placeholder="Название*" />
-      <button>+</button>
+      <input v-model="newTask.name" placeholder="Название*" />
+      <button @click="createProfile">+</button>
     </div>
-    <div><input class="description" placeholder="Описание" /></div>
+    <div>
+      <input
+        v-model="newTask.description"
+        class="description"
+        placeholder="Описание"
+      />
+      <input v-model="newTask.command" class="command" placeholder="Команда" />
+    </div>
     <select v-model="newTask.type">
       <option value="run_bat">Запуск bat*</option>
       <option value="run_exe">Запуск программы*</option>
@@ -21,8 +28,13 @@
 
 <script setup lang="ts">
 import { useAetherLink } from "../../composables/useAetherLink";
+import { onMounted } from "vue";
 
-const { newTask, devStatus } = useAetherLink();
+const { newTask, devStatus, checkDev, createProfile } = useAetherLink();
+
+onMounted(() => {
+  checkDev();
+});
 </script>
 
 <style scoped>
@@ -51,6 +63,7 @@ button {
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;
   border: none;
+  cursor: pointer;
 }
 
 input {
@@ -58,7 +71,8 @@ input {
   border-bottom-right-radius: 0;
 }
 
-.description {
+.description,
+.command {
   border-radius: 12px;
 }
 
@@ -108,5 +122,18 @@ select:focus {
   color: var(--text2);
   text-align: center;
   gap: 30px;
+}
+
+.input-block input,
+.input-block button {
+  height: 40px;
+}
+
+.input-block input {
+  width: 70vw;
+}
+
+.input-block button {
+  width: 20vw;
 }
 </style>

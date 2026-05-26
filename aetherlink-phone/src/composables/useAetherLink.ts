@@ -16,6 +16,13 @@ interface Profile {
   description?: string;
 }
 
+interface Command {
+  serverId: string;
+  name: string;
+  command: string;
+  description?: string;
+}
+
 // type Screen = "servers" | "pair" | "control";
 
 // ── Глобальный стейт приложения (вынесен за пределы функции для совместного использования) ──────────────────
@@ -41,10 +48,8 @@ const shellCmd = ref("");
 const newTask = ref({
   name: "",
   description: "",
-  type: "run_bat",
-  path: "",
-  args: "",
-  script: "", // Для PowerShell
+  command: "",
+  type: "run_bat", // значение по умолчанию
 });
 
 export function useAetherLink() {
@@ -257,6 +262,21 @@ export function useAetherLink() {
     }
   }
 
+  async function createProfile() {
+    if (!active.value) return;
+    loading.value = true;
+    try {
+      await invoke("create_profile", {
+        serverId: active.value.id,
+        name: newTask.value.name,
+        commands: newTask.value.command,
+        description: newTask.value.description || undefined,
+      });
+    } catch (e) {
+      msg(`Ошибка: ${e}`);
+    }
+  }
+
   async function discover() {
     if (!active.value) return;
     loading.value = true;
@@ -294,6 +314,7 @@ export function useAetherLink() {
     selectServer,
     startQrScan,
     stopQrScan,
+    createProfile,
     checkDev,
     pair,
     saveConnectionData,
