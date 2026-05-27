@@ -151,6 +151,7 @@ async fn create_profile(
     kind: serde_json::Value,
 ) -> Result<String, String> {
     let kind: ProfileKind = serde_json::from_value(kind).map_err(|e| e.to_string())?;
+
     let profile = Profile::new(name, description, kind);
     let id = profile.id.clone();
 
