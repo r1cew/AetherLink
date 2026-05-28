@@ -72,6 +72,12 @@ button {
   font-weight: 600;
   border-radius: 12px;
   border: none;
+  transition: 0.3s;
+}
+
+button:disabled {
+  background: var(--text2);
+  transition: 0.3s;
 }
 
 .devOffline {

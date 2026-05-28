@@ -62,6 +62,7 @@ body.scanning-active .main-page {
 
 .active-btn {
   border-bottom: 2px solid var(--red);
+  transition: 0.3s;
 }
 
 .components-block {

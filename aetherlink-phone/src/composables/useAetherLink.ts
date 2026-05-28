@@ -42,7 +42,7 @@ const shellCmd = ref("");
 const newTask = ref({
   name: "",
   description: "",
-  command: "",
+  path: "",
   type: "run_bat", // значение по умолчанию
 });
 
@@ -258,13 +258,16 @@ export function useAetherLink() {
 
   async function createProfile() {
     if (!active.value) return;
-    loading.value = true;
+
     try {
       await invoke("create_profile", {
         serverId: active.value.id,
-        name: newTask.value.name,
-        commands: newTask.value.command,
+        name: newTask.value.name || "Название не указано",
         description: newTask.value.description || undefined,
+        commands: {
+          type: newTask.value.type,
+          path: newTask.value.path,
+        },
       });
     } catch (e) {
       msg(`Ошибка: ${e}`);

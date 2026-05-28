@@ -1,8 +1,8 @@
 <template>
   <div v-if="devStatus && devStatus.is_dev === true">
     <div class="input-block">
-      <input v-model="newTask.name" placeholder="Название*" />
-      <button @click="createProfile">+</button>
+      <input v-model="newTask.name" placeholder="Название" />
+      <button @click="createProfile" :disabled="!newTask.path">+</button>
     </div>
     <div>
       <input
@@ -10,7 +10,12 @@
         class="description"
         placeholder="Описание"
       />
-      <input v-model="newTask.command" class="command" placeholder="Команда" />
+      <input
+        v-model="newTask.path"
+        type="text"
+        class="command"
+        placeholder="Команда*"
+      />
     </div>
     <select v-model="newTask.type">
       <option value="run_bat">Запуск bat*</option>
@@ -66,6 +71,10 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  background: var(--text2);
+}
+
 input {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
@@ -76,14 +85,15 @@ input {
   border-radius: 12px;
 }
 
-select option {
-  background-color: #1a1a1a;
-  color: var(--red);
-}
-
 select:focus {
   outline: none;
   background-color: #1a1a1a;
+}
+
+/* Явное окрашивание элементов списка */
+select option {
+  background-color: #1a1a1a; /* Темный фон для каждой опции */
+  color: var(--red); /* Красный текст для каждой опции */
 }
 
 .input-block {
