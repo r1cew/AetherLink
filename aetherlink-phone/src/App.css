@@ -2,6 +2,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
 }
 
 :root {
@@ -10,7 +14,7 @@
   --bg3: #1c1c2e;
   --border: rgba(255, 255, 255, 0.08);
   --accent: #7c3aed;
-  --accent2: #a78bfa;
+  --accent2: rgb(255, 187, 61);
   --red: #d8323c;
   --text: #e2e2f0;
   --text2: #888;
@@ -72,8 +76,10 @@ a {
 }
 
 .status-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--status3);
-  display: inline-block;
   padding: 4px 12px;
   border-radius: 24px;
   width: fit-content;

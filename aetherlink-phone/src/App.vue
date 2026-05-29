@@ -13,9 +13,11 @@ import { onMounted } from "vue";
 import { useAetherLink } from "./composables/useAetherLink";
 import QrScanner from "./views/QrScanner.vue";
 
-const { isScanning, loadServers, autoConnect, stopQrScan } = useAetherLink();
+const { isScanning, loadServers, autoConnect, stopQrScan, discover } =
+  useAetherLink();
 
 onMounted(() => {
   loadServers();
+  discover();
 });
 </script>

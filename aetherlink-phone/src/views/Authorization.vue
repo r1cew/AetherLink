@@ -4,25 +4,42 @@
     <div class="status">
       <div>
         <span class="status-default">{{
-          isJustConnected ? "Подключен" : "Не подключен"
+          isJustConnected ? "Подключен" : "Нет подключения к ПК"
         }}</span>
         <p>
           {{
             servers.length > 0
-              ? "Устройство найдено!"
-              : "Устройство не распознано"
+              ? "Устройства найдены!"
+              : "Нет доступных устройств"
           }}
         </p>
-        <p>Ожидаем авторизацию</p>
-        <div class="btns">
-          <button @click="startQrScan">Войти</button>
-        </div>
-        <div class="json-input-group">
-          <input v-model="jsonAuth" placeholder="Вставьте JSON" type="text" />
-          <button @click="JsonLogin" :disabled="!jsonAuth.trim() || loading">
-            {{ loading ? "Подключение..." : "Войти по JSON" }}
+        <div class="navigation-block">
+          <button
+            @click="nav_page = 1"
+            :class="nav_page == 1 ? 'nav-btn active-btn' : 'nav-btn'"
+          >
+            Войти по QR
+          </button>
+          <button
+            @click="nav_page = 2"
+            :class="nav_page == 2 ? 'nav-btn active-btn' : 'nav-btn'"
+          >
+            Устройства
           </button>
         </div>
+
+        <AuthToQr
+          v-if="nav_page === 1"
+          :servers="servers"
+          :loading="loading"
+          :jsonAuth="jsonAuth"
+        />
+
+        <AuthToSaveDevices
+          v-if="nav_page === 2"
+          :profiles="profiles"
+          :active="active"
+        />
       </div>
     </div>
   </section>
@@ -31,29 +48,15 @@
 <script setup lang="ts">
 import { useAetherLink } from "../composables/useAetherLink";
 import { useRouter } from "vue-router";
-import { watch, onMounted } from "vue";
+import { watch, ref } from "vue";
+import AuthToQr from "./components/AuthToQr.vue";
+import AuthToSaveDevices from "./components/AuthToSaveDevices.vue";
 
 const router = useRouter();
-const {
-  startQrScan,
-  isJustConnected,
-  active,
-  profiles,
-  servers,
-  loading,
-  jsonAuth,
-  JsonLogin,
-} = useAetherLink();
+const nav_page = ref(1);
 
-console.log(servers);
-
-onMounted(() => {
-  if (active.value || profiles.value.length > 0) {
-    console.log(active);
-    console.log("Найдены сохраненные данные, переход на /main");
-    router.push("/main");
-  }
-});
+const { isJustConnected, active, profiles, servers, loading, jsonAuth } =
+  useAetherLink();
 
 watch(isJustConnected, (connected) => {
   if (connected) {
@@ -65,4 +68,35 @@ watch(isJustConnected, (connected) => {
 
 <style scoped>
 @import "../styles/authorization.css";
+
+.navigation-block {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 50px;
+  justify-content: center;
+  align-items: center;
+}
+.nav-btn {
+  background: none;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  padding-bottom: 2px;
+  font-size: 16px;
+}
+.active-btn {
+  border-bottom: 2px solid var(--red);
+  transition: 0.3s;
+}
+
+/* Мобильные улучшения */
+@media (max-width: 480px) {
+  .navigation-block {
+    gap: 30px !important;
+  }
+
+  .nav-btn {
+    font-size: 14px !important;
+  }
+}
 </style>

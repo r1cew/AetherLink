@@ -29,7 +29,7 @@ android {
     signingConfigs {
         create("release") {
             // Путь из gen/android/app до корня (три уровня вверх)
-            storeFile = file("../../../../my-release-key.jks") 
+            storeFile = file("../../../my-release-key.jks") 
             storePassword = "123123"
             keyAlias = "my-key-alias"
             keyPassword = "123123"

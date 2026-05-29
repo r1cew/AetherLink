@@ -3,14 +3,9 @@
     <div class="name-block">
       <h1>AetherLink</h1>
     </div>
-    <!-- <div class="profiles-block">
-      <div v-for="server in servers">
-        {{ server.name }}
-      </div>
-    </div> -->
     <div class="status-block">
       <span class="status-ok" style="cursor: pointer" @click="logout">
-        <img :src="leave" alt="" />
+        <ArrowBigLeft />
         {{ isJustConnected ? "Подключен" : "Не подключен" }}</span
       >
     </div>
@@ -52,6 +47,7 @@ import NavTwo from "./components/NavTwo.vue";
 import NavThree from "./components/NavThree.vue";
 import { ref, onMounted } from "vue";
 import leave from "../assets/leave.png";
+import { ArrowBigLeft } from "lucide-vue-next";
 
 const nav_page = ref(1);
 const router = useRouter();

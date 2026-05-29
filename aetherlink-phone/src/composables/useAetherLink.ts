@@ -30,13 +30,12 @@ const isScanning = ref(false);
 const isJustConnected = ref(false);
 const devStatus = ref<{ is_dev: boolean; mode: string } | null>(null);
 const jsonAuth = ref<string>("");
-const router = useRouter();
 
 // const error = ref<string>("");
 
 const qrText = ref("");
-const phoneName = ref("Мой телефон");
-const pcName = ref("Домашний ПК");
+const phoneName = ref("");
+const pcName = ref("");
 const shellCmd = ref("");
 
 const newTask = ref({
@@ -48,7 +47,7 @@ const newTask = ref({
 
 export function useAetherLink() {
   const storePromise = Store.load("settings.json");
-
+  const router = useRouter();
   // ── Логика работы с памятью ──────────────────────────────────────────────────
   async function saveConnectionData() {
     try {
@@ -128,6 +127,9 @@ export function useAetherLink() {
     log.value = "";
     loadProfiles(s);
     screen.value = "control";
+    isJustConnected.value = true;
+    saveConnectionData();
+    router.push("/main");
   }
 
   async function JsonLogin() {
@@ -150,8 +152,8 @@ export function useAetherLink() {
     try {
       const id = await invoke<string>("pair_with_qr", {
         qrJson: content.trim(),
-        name: phoneName.value,
-        nickname: pcName.value,
+        name: phoneName.value || "Мой телефон",
+        nickname: pcName.value || "Домашний ПК",
       });
 
       await loadServers();
@@ -282,12 +284,23 @@ export function useAetherLink() {
       const ip = await invoke<string>("discover_and_update", {
         serverId: active.value.id,
       });
-      msg(`Найден: ${ip}`);
+      console.log(ip);
       await loadServers();
     } catch (e) {
       msg(`Ошибка ${e}`);
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function removeServer(serverId: string) {
+    try {
+      await invoke("remove_server", {
+        serverId: serverId,
+      });
+      loadServers();
+    } catch (e) {
+      console.log(e);
     }
   }
 
@@ -320,6 +333,7 @@ export function useAetherLink() {
     discover,
     loadServers,
     loadProfiles,
+    removeServer,
     autoConnect,
     resetConnection,
   };
