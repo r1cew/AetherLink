@@ -4,7 +4,7 @@
     <div class="status">
       <div>
         <span class="status-default">{{
-          isJustConnected ? "Подключен" : "Нет подключения к ПК"
+          isJustConnected ? "Подключен" : "Подключитесь к ПК"
         }}</span>
         <p>
           {{
@@ -47,23 +47,14 @@
 
 <script setup lang="ts">
 import { useAetherLink } from "../composables/useAetherLink";
-import { useRouter } from "vue-router";
-import { watch, ref } from "vue";
+import { ref } from "vue";
 import AuthToQr from "./components/AuthToQr.vue";
 import AuthToSaveDevices from "./components/AuthToSaveDevices.vue";
 
-const router = useRouter();
 const nav_page = ref(1);
 
 const { isJustConnected, active, profiles, servers, loading, jsonAuth } =
   useAetherLink();
-
-watch(isJustConnected, (connected) => {
-  if (connected) {
-    console.log(active);
-    router.push("/main");
-  }
-});
 </script>
 
 <style scoped>
