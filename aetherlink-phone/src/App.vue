@@ -29,3 +29,9 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style>
+.page-content {
+  margin-top: 10vh;
+}
+</style>

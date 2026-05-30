@@ -186,7 +186,7 @@ export function useAetherLink() {
     loading.value = true;
 
     try {
-      const res = await api.sendSafe(active.value.id, command, params);
+      await api.sendSafe(active.value.id, command, params);
       const resultMsg = `${command}: выполнено успешно`;
       msg(resultMsg);
       success(resultMsg, 2000);
@@ -223,6 +223,7 @@ export function useAetherLink() {
 
   async function createProfile() {
     if (!active.value) return;
+    loading.value = true;
     try {
       await api.createProfile(
         active.value.id,
@@ -230,8 +231,13 @@ export function useAetherLink() {
         newTask.value.description || undefined,
         { type: newTask.value.type, path: newTask.value.path },
       );
+      success(`Профиль ${newTask.value.name} создан`, 3000);
     } catch (e) {
       msg(`Ошибка: ${e}`);
+    } finally {
+      setTimeout(() => {
+        loading.value = false;
+      }, 2000);
     }
   }
 

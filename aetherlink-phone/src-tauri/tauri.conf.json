@@ -12,8 +12,8 @@
     "windows": [
       {
         "title": "AetherLink Phone",
-        "width": 400,
-        "height": 700,
+        "width": 540,
+        "height": 1230,
         "resizable": false,
         "fullscreen": false
       }

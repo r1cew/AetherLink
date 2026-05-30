@@ -2,7 +2,9 @@
   <div v-if="devStatus && devStatus.is_dev === true">
     <div class="input-block">
       <input v-model="newTask.name" placeholder="Название" />
-      <button @click="createProfile" :disabled="!newTask.path">+</button>
+      <button @click="createProfile" :disabled="!newTask.path || loading">
+        +
+      </button>
     </div>
     <div>
       <input
@@ -35,7 +37,8 @@
 import { useAetherLink } from "../../composables/useAetherLink";
 import { onMounted } from "vue";
 
-const { newTask, devStatus, checkDev, createProfile } = useAetherLink();
+const { newTask, devStatus, checkDev, createProfile, loading } =
+  useAetherLink();
 
 onMounted(() => {
   checkDev();

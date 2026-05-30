@@ -27,10 +27,10 @@ const { profiles, runProfile, devStatus, checkDev, loading } = useAetherLink();
 
 const selectedProfileId = ref<string>("");
 
-const profileName = computed(() => {
+const profileName = computed<string>(() => {
   const profilesList = profiles.value;
-  if (!profilesList) return undefined;
-  return profilesList.find((p) => p.id === selectedProfileId.value)?.name;
+  if (!profilesList) return "";
+  return profilesList.find((p) => p.id === selectedProfileId.value)?.name ?? "";
 });
 
 onMounted(() => {

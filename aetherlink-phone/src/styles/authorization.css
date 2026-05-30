@@ -3,7 +3,6 @@
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  height: 100vh;
 }
 
 .auth-page > h1 {

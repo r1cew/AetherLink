@@ -7,20 +7,16 @@
     >
       {{ shutdownConfirming ? "Подтвердите повторным нажатием" : "Shutdown" }}
     </button>
-    <button @click="safe('sleep')" :disabled="loading">Sleep</button>
-    <button @click="safe('lock')" :disabled="loading">LockScreen</button>
+    <button @click="safe('sleep')">Sleep</button>
+    <button @click="safe('lock')">LockScreen</button>
     <div class="double-btns">
-      <button @click="safe('volume_down')" class="btn1" :disabled="loading">
-        Volume -
-      </button>
-      <button @click="safe('volume_up')" class="btn2" :disabled="loading">
-        Volume +
-      </button>
+      <button @click="safe('volume_down')" class="btn1">Volume -</button>
+      <button @click="safe('volume_up')" class="btn2">Volume +</button>
     </div>
     <div class="media-btns">
-      <button @click="safe('media_prev')" :disabled="loading">Prev</button>
-      <button @click="safe('media_pause')" :disabled="loading">Stop</button>
-      <button @click="safe('media_next')" :disabled="loading">Next</button>
+      <button @click="safe('media_prev')">Prev</button>
+      <button @click="safe('media_pause')">Stop</button>
+      <button @click="safe('media_next')">Next</button>
     </div>
   </div>
 </template>

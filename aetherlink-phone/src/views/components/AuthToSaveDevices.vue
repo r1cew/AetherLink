@@ -108,6 +108,8 @@ const { selectServer, servers, removeServer } = useAetherLink();
   display: flex;
   align-items: center;
   gap: 50px;
+  min-width: 320px;
+  max-width: 320px;
   border: 1px solid var(--red);
   padding: 3vw;
   border-radius: 24px;

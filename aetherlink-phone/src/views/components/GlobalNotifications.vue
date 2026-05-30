@@ -43,7 +43,7 @@ const getIcon = (type: string) => {
 <style scoped>
 .notifications-container {
   position: fixed;
-  top: 20px;
+  top: 50px;
   right: 20px;
   z-index: 9999;
   display: flex;
