@@ -6,10 +6,10 @@
       </option>
     </select>
     <button
-      @click="runProfile(selectedProfileId)"
-      :disabled="!selectedProfileId"
+      @click="runProfile(selectedProfileId, profileName)"
+      :disabled="!selectedProfileId || loading"
     >
-      Запустить
+      {{ loading ? "Запуск..." : "Запустить" }}
     </button>
   </div>
   <div v-else>
@@ -22,10 +22,16 @@
 
 <script setup lang="ts">
 import { useAetherLink } from "../../composables/useAetherLink";
-import { ref, onMounted } from "vue";
-const { profiles, runProfile, devStatus, checkDev } = useAetherLink();
+import { ref, onMounted, computed } from "vue";
+const { profiles, runProfile, devStatus, checkDev, loading } = useAetherLink();
 
 const selectedProfileId = ref<string>("");
+
+const profileName = computed(() => {
+  const profilesList = profiles.value;
+  if (!profilesList) return undefined;
+  return profilesList.find((p) => p.id === selectedProfileId.value)?.name;
+});
 
 onMounted(() => {
   checkDev();

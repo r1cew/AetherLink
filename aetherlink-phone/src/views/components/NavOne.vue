@@ -1,24 +1,55 @@
 <template>
   <div>
-    <button @click="safe('shutdown')">Shutdow</button>
-    <button @click="safe('sleep')">Sleep</button>
-    <button @click="safe('lock')">LockScreen</button>
+    <button
+      @click="handleShutdown"
+      :disabled="loading || shutdownConfirming"
+      :class="{ confirming: shutdownConfirming }"
+    >
+      {{ shutdownConfirming ? "Подтвердите повторным нажатием" : "Shutdown" }}
+    </button>
+    <button @click="safe('sleep')" :disabled="loading">Sleep</button>
+    <button @click="safe('lock')" :disabled="loading">LockScreen</button>
     <div class="double-btns">
-      <button @click="safe('volume_down')" class="btn1">Volume -</button>
-      <button @click="safe('volume_up')" class="btn2">Volume +</button>
+      <button @click="safe('volume_down')" class="btn1" :disabled="loading">
+        Volume -
+      </button>
+      <button @click="safe('volume_up')" class="btn2" :disabled="loading">
+        Volume +
+      </button>
     </div>
     <div class="media-btns">
-      <button @click="safe('media_prev')">Prev</button>
-      <button @click="safe('media_pause')">Stop</button>
-      <button @click="safe('media_next')">Next</button>
+      <button @click="safe('media_prev')" :disabled="loading">Prev</button>
+      <button @click="safe('media_pause')" :disabled="loading">Stop</button>
+      <button @click="safe('media_next')" :disabled="loading">Next</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useAetherLink } from "../../composables/useAetherLink";
 
-const { safe } = useAetherLink();
+const { safe, loading } = useAetherLink();
+
+const shutdownConfirming = ref(false);
+let confirmTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const handleShutdown = () => {
+  if (shutdownConfirming.value) {
+    if (confirmTimeout) {
+      clearTimeout(confirmTimeout);
+      confirmTimeout = null;
+    }
+    safe("shutdown");
+    shutdownConfirming.value = false;
+  } else {
+    shutdownConfirming.value = true;
+    confirmTimeout = setTimeout(() => {
+      shutdownConfirming.value = false;
+      confirmTimeout = null;
+    }, 3000);
+  }
+};
 </script>
 
 <style scoped>
@@ -62,5 +93,10 @@ button {
   border: 2px solid rgba(216, 50, 60, 0.3);
   background: none;
   color: var(--red);
+}
+
+button.confirming {
+  border-color: rgba(216, 50, 60, 0.8);
+  background: rgba(216, 50, 60, 0.1);
 }
 </style>

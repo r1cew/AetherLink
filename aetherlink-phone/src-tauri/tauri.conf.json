@@ -14,7 +14,7 @@
         "title": "AetherLink Phone",
         "width": 400,
         "height": 700,
-        "resizable": true,
+        "resizable": false,
         "fullscreen": false
       }
     ],

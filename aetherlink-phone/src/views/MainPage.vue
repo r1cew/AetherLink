@@ -69,7 +69,6 @@ async function logout() {
 }
 
 onMounted(() => {
-  stopQrScan();
   loadProfiles(active.value);
   console.log(devStatus.value);
 });
