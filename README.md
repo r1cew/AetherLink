@@ -1,6 +1,6 @@
 # AetherLink
 
-![AetherLink Banner](aetherlink-pc\src-tauri\icons\icon.png)
+![AetherLink Banner](aetherlink-pc/src-tauri/icons/icon.png)
 
 **AetherLink** – это приложение для удалённого управления компьютером (Windows) с телефона (Android) через локальную сеть.  
 Просто, быстро и безопасно.  
@@ -47,11 +47,11 @@
 
 | Авторизация | Управление | Кастомизация |
 |-------------|------------|--------------|
-| ![Скриншот 1](aetherlink-phone\demo\demo1.jpg) | ![Скриншот 2](aetherlink-phone\demo\demo2.jpg) | ![Скриншот 3](aetherlink-phone\demo\demo3.jpg) |
+| ![Скриншот 1](aetherlink-phone/demo/demo1.jpg) | ![Скриншот 2](aetherlink-phone/demo/demo2.jpg) | ![Скриншот 3](aetherlink-phone/demo/demo3.jpg) |
 
 | Авторизация | Управление |
 |-------------|------------|
-| ![Скриншот 1](aetherlink-pc\demo\demo1.png) | ![Скриншот 2](aetherlink-pc\demo\demo2.png) |
+| ![Скриншот 1](aetherlink-pc/demo/demo1.png) | ![Скриншот 2](aetherlink-pc/demo/demo2.png) |
 ---
 
 ## 🚀 Быстрый старт
