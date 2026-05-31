@@ -6,26 +6,58 @@
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE/Edge */
+  -webkit-tap-highlight-color: transparent; /* Убрать голубое свечение элементов при нажатии */
 }
 
 :root {
   --bg: #0c0e0c;
   --bg2: #13131f;
   --bg3: #1c1c2e;
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #7c3aed;
-  --accent2: rgb(255, 187, 61);
   --red: #d8323c;
+  --accent: rgba(216, 50, 61, 0.507);
+  --accent2: #e2e2f0;
   --text: #e2e2f0;
   --text2: #888;
+  --border: rgba(255, 255, 255, 0.08);
   --radius: 14px;
   --status: #a4a4a450;
   --status2: #820000;
   --status3: #186600;
+  --bg-image: none;
+  --bg-overlay: none;
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 15px;
-  color: var(--text);
+}
+
+body {
+  position: relative;
   background: var(--bg);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-overlay);
+  z-index: -1;
 }
 
 html,
@@ -33,7 +65,6 @@ body,
 #root {
   width: 100%;
   min-height: 100%;
-  background: var(--bg);
 }
 
 button,
@@ -60,6 +91,7 @@ a {
 .status-default {
   background: var(--status);
   display: inline-block;
+  color: white;
   padding: 4px 12px;
   border-radius: 24px;
   width: fit-content;
@@ -71,6 +103,7 @@ a {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 24px;
+  color: white;
   width: fit-content;
   max-width: fit-content;
 }
@@ -79,6 +112,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  color: white;
   background: var(--status3);
   padding: 4px 12px;
   border-radius: 24px;

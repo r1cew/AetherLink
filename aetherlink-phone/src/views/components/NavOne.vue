@@ -66,6 +66,12 @@ div {
   width: 100%;
 }
 
+button:active {
+  background-color: rgba(216, 50, 60, 0.8);
+  transition: background-color 0.2s ease-in-out;
+  color: var(--bg);
+}
+
 .btn1 {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
@@ -86,9 +92,9 @@ button {
   padding: 10px;
   cursor: pointer;
   border-radius: 12px;
-  border: 2px solid rgba(216, 50, 60, 0.3);
+  border: 2px solid var(--accent);
   background: none;
-  color: var(--red);
+  color: var(--text);
 }
 
 button.confirming {

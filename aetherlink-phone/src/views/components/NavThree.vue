@@ -59,14 +59,14 @@ input {
   padding: 10px;
   cursor: pointer;
   border-radius: 12px;
-  border: 2px solid rgba(216, 50, 60, 0.3);
+  border: 2px solid var(--accent);
   background: none;
-  color: var(--red);
+  color: var(--text);
 }
 
 button {
   background: var(--red);
-  color: white;
+  color: var(--text);
   font-weight: 600;
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;

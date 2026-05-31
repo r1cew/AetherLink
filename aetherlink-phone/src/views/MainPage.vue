@@ -5,7 +5,7 @@
     </div>
     <div class="status-block">
       <span class="status-ok" style="cursor: pointer" @click="logout">
-        <ArrowBigLeft />
+        <ArrowBigLeft class="arrow" />
         {{ isJustConnected ? "Подключен" : "Не подключен" }}</span
       >
     </div>

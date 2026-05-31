@@ -57,14 +57,14 @@ select {
   padding: 10px;
   cursor: pointer;
   border-radius: 12px;
-  border: 2px solid rgba(216, 50, 60, 0.3);
+  border: 2px solid var(--accent);
   background: none;
-  color: var(--red);
+  color: var(--text);
 }
 
 select option {
   background-color: #1a1a1a;
-  color: var(--red);
+  color: var(--text);
 }
 
 select:focus {

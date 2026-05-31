@@ -67,18 +67,6 @@ const { isJustConnected, active, profiles, servers, loading, jsonAuth } =
   justify-content: center;
   align-items: center;
 }
-.nav-btn {
-  background: none;
-  color: var(--text);
-  border: none;
-  cursor: pointer;
-  padding-bottom: 2px;
-  font-size: 16px;
-}
-.active-btn {
-  border-bottom: 2px solid var(--red);
-  transition: 0.3s;
-}
 
 /* Мобильные улучшения */
 @media (max-width: 480px) {

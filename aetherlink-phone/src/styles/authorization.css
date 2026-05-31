@@ -37,6 +37,7 @@
 
 .status p {
   margin: 0;
+  color: white;
   text-align: center;
 }
 
@@ -61,12 +62,12 @@
   transition: background-color 0.2s ease;
   background: none;
   color: var(--text);
-  border: 2px solid var(--red);
+  border: 2px solid var(--accent);
   border-radius: 13px;
 }
 
 .btns button:active {
-  background: var(--red);
+  background: var(--accent);
 }
 
 .btns select {
@@ -79,7 +80,6 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   background: none;
-  background-color: var(--bg);
   color: var(--text);
   border: 2px solid var(--red);
   border-radius: 13px;
@@ -111,4 +111,8 @@
 .active-btn {
   border-bottom: 2px solid var(--red);
   transition: 0.3s;
+}
+
+.auth-page > h1 {
+  color: var(--text);
 }

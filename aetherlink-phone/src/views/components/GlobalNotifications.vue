@@ -55,7 +55,7 @@ const getIcon = (type: string) => {
   min-width: 280px;
   padding: 12px 16px;
   border-radius: var(--radius);
-  background: var(--bg2);
+  background: var(--bg);
   border: 1px solid var(--border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -108,7 +108,7 @@ const getIcon = (type: string) => {
   cursor: pointer;
   opacity: 0.5;
   font-size: 16px;
-  color: var(--text);
+  color: #888;
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s ease;

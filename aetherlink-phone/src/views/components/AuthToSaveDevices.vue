@@ -64,12 +64,6 @@ const { selectServer, servers, removeServer } = useAetherLink();
   overflow: hidden;
 }
 
-.devices-header {
-  padding: 8px 12px 12px 12px;
-  border-bottom: 1px solid var(--red);
-  margin-bottom: 16px;
-}
-
 .devices-title {
   margin: 0;
   font-size: 15px;
@@ -110,7 +104,7 @@ const { selectServer, servers, removeServer } = useAetherLink();
   gap: 50px;
   min-width: 320px;
   max-width: 320px;
-  border: 1px solid var(--red);
+  border: 1px solid var(--accent);
   padding: 3vw;
   border-radius: 24px;
   flex-direction: row;
@@ -170,7 +164,6 @@ const { selectServer, servers, removeServer } = useAetherLink();
   border-radius: 40px;
   white-space: nowrap;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .connect-btn:active {

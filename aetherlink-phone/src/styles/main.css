@@ -17,6 +17,7 @@ body.scanning-active .main-page {
 .name-block {
   display: flex;
   align-items: center;
+  color: white;
   height: 200px;
 }
 
@@ -58,7 +59,7 @@ body.scanning-active .main-page {
 
 .nav-btn {
   background: none;
-  color: var(--text);
+  color: var(--text2);
   border: none;
   cursor: pointer;
   padding-bottom: 2px;
@@ -66,9 +67,14 @@ body.scanning-active .main-page {
 
 .active-btn {
   border-bottom: 2px solid var(--red);
+  color: var(--text);
   transition: 0.3s;
 }
 
 .components-block {
   width: 75vw;
+}
+
+.arrow {
+  width: 17px;
 }

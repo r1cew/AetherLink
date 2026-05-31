@@ -33,7 +33,7 @@ const { startQrScan, phoneName, pcName } = useAetherLink();
   background: none;
   color: var(--text);
   border: none;
-  border-bottom: 1px solid var(--text);
+  border-bottom: 1px solid var(--accent2);
   padding: 10px;
 }
 
@@ -54,14 +54,15 @@ const { startQrScan, phoneName, pcName } = useAetherLink();
   font-size: inherit;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  background: none;
+  border: none;
+  background: var(--red);
   color: var(--text);
-  border: 2px solid var(--red);
   border-radius: 13px;
 }
 
 .btns button:active {
-  background: var(--red);
+  transform: scale(0.9);
+  transition: transform 0.2 ease-in-out;
 }
 
 .btns button:disabled {
